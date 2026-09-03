@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+@theme {
+  --color-black: #000000;
+  --color-white: #ffffff;
+  --color-soft: #fafafa;
+  --color-surface: #181818;
+  --color-muted: #737373;
+  --color-border: #e5e5e5;
+  --color-positive: #16a34a;
+  --color-positive-soft: #f0fdf4;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fef2f2;
+  --color-warning: #f59e0b;
+  --color-warning-soft: #fffbeb;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-brand: var(--font-plus-jakarta), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-lg: 0.75rem;
+  --radius-md: 0.5rem;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  background-color: var(--color-white);
+  color: var(--color-black);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-brand);
+  letter-spacing: -0.02em;
+}
+
+.font-brand {
+  font-family: var(--font-brand);
+}
+
+/* Number alignment for financial data */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Accessible focus states */
+:focus-visible {
+  outline: 2px solid var(--color-black);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--color-black);
+  color: var(--color-white);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum TransactionType {
+  income
+  expense
+}
+
+enum RecurringFrequency {
+  weekly
+  monthly
+  yearly
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  currency     String   @default("NGN")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  onboardingCompleted Boolean @default(false)
+
+  incomeSources  IncomeSource[]
+  transactions   Transaction[]
+  recurringTransactions RecurringTransaction[]
+  monthlyPlans   MonthlyPlan[]
+  savingsGoals   SavingsGoal[]
+  bills          Bill[]
+  notificationPreference NotificationPreference?
+}
+
+model IncomeSource {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  amount    Decimal
+  frequency RecurringFrequency @default(monthly)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id   String @id @default(cuid())
+  name String @unique
+  kind TransactionType @default(expense)
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Decimal
+  type      TransactionType
+  category  String
+  date      DateTime
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RecurringTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  amount    Decimal
+  type      TransactionType
+  category  String
+  frequency RecurringFrequency @default(monthly)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MonthlyPlan {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  month  Int
+  year   Int
+  budgetItems BudgetItem[]
+
+  @@unique([userId, month, year])
+}
+
+model BudgetItem {
+  id          String      @id @default(cuid())
+  planId      String
+  plan        MonthlyPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  category    String
+  plannedAmount Decimal
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SavingsGoal {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  targetAmount Decimal
+  currentAmount Decimal @default(0)
+  targetDate   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Bill {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  amount    Decimal
+  dueDate   DateTime
+  frequency RecurringFrequency @default(monthly)
+  paid      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NotificationPreference {
+  id            String @id @default(cuid())
+  userId        String @unique
+  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailDigest   Boolean @default(true)
+  billReminders Boolean @default(true)
+  goalProgress  Boolean @default(true)
+  weeklySummary Boolean @default(false)
+}
