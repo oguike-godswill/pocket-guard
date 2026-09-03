@@ -1,19 +1,12 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Logo } from "@/components/logo";
-import { verifySession } from "@/lib/auth";
-import { redirect } from "next/navigation";
 
-export default async function AuthLayout({
+export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await verifySession();
-  if (session) {
-    redirect("/dashboard");
-  }
-
   return (
     <div className="flex min-h-screen flex-col bg-soft">
       <header className="flex h-16 items-center border-b border-border bg-white px-6">

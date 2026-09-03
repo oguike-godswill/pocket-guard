@@ -132,21 +132,6 @@ export default function HomePage() {
                 into one clear plan. Know exactly how much you can safely spend
                 right now.
               </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/register"
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-black px-6 text-base font-medium text-white transition-colors hover:bg-neutral-800"
-                >
-                  Get started
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="/login"
-                  className="inline-flex h-12 items-center justify-center rounded-lg border border-border bg-white px-6 text-base font-medium text-black transition-colors hover:bg-neutral-50"
-                >
-                  Sign in
-                </Link>
-              </div>
               <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted">
                 <span className="flex items-center gap-1.5">
                   <Check className="h-4 w-4 text-positive" /> Simple

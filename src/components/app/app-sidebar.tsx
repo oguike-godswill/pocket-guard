@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Receipt,
@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/cn";
 import { Logo } from "@/components/logo";
 import { ConfirmDialog } from "@/components/ui/modal";
+import { logoutAction } from "@/lib/actions/auth";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -30,18 +31,13 @@ const navItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
   async function handleLogout() {
     setLoggingOut(true);
-    const res = await fetch("/api/auth/logout", { method: "POST" });
-    setLoggingOut(false);
-    setLogoutOpen(false);
-    router.push("/login");
-    router.refresh();
+    await logoutAction();
   }
 
   const content = (

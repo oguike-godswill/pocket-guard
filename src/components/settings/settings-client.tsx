@@ -16,6 +16,7 @@ import {
   updateNotifications,
   deleteAccount,
 } from "@/lib/actions/settings";
+import { logoutAction } from "@/lib/actions/auth";
 
 type NotifPrefs = {
   emailDigest: boolean;
@@ -293,9 +294,7 @@ export function SettingsClient({
           <Button
             variant="secondary"
             onClick={async () => {
-              const res = await fetch("/api/auth/logout", { method: "POST" });
-              router.push("/");
-              router.refresh();
+              await logoutAction();
             }}
           >
             <LogOut className="h-4 w-4" /> Log out

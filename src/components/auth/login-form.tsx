@@ -1,10 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
+import { useEffect, useRef, useActionState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { loginAction, type ActionResult } from "@/lib/actions/auth";
 
 export function LoginForm() {
@@ -12,8 +14,18 @@ export function LoginForm() {
     loginAction,
     {}
   );
+  const { toast } = useToast();
   const searchParams = useSearchParams();
   const wasReset = searchParams.get("reset") === "1";
+  const toastFired = useRef(false);
+
+  useEffect(() => {
+    if (state.error && !toastFired.current) {
+      toast("error", state.error);
+      toastFired.current = true;
+    }
+    if (!state.error) toastFired.current = false;
+  }, [state.error, toast]);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -25,14 +37,6 @@ export function LoginForm() {
           Your password has been reset. Sign in with your new password.
         </div>
       )}
-      {state.error && (
-        <div
-          className="rounded-lg border border-danger/30 bg-danger-soft p-3 text-sm text-danger"
-          role="alert"
-        >
-          {state.error}
-        </div>
-      )}
       <Input
         type="email"
         name="email"
@@ -42,8 +46,7 @@ export function LoginForm() {
         required
         error={state.fieldErrors?.email?.[0]}
       />
-      <Input
-        type="password"
+      <PasswordInput
         name="password"
         label="Password"
         placeholder="Your password"

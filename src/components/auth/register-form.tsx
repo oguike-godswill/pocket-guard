@@ -1,9 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useEffect, useRef, useActionState } from "react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { registerAction, type ActionResult } from "@/lib/actions/auth";
 
 export function RegisterForm() {
@@ -11,17 +13,19 @@ export function RegisterForm() {
     registerAction,
     {}
   );
+  const { toast } = useToast();
+  const toastFired = useRef(false);
+
+  useEffect(() => {
+    if (state.error && !toastFired.current) {
+      toast("error", state.error);
+      toastFired.current = true;
+    }
+    if (!state.error) toastFired.current = false;
+  }, [state.error, toast]);
 
   return (
     <form action={formAction} className="space-y-4">
-      {state.error && (
-        <div
-          className="rounded-lg border border-danger/30 bg-danger-soft p-3 text-sm text-danger"
-          role="alert"
-        >
-          {state.error}
-        </div>
-      )}
       <Input
         type="text"
         name="name"
@@ -40,8 +44,7 @@ export function RegisterForm() {
         required
         error={state.fieldErrors?.email?.[0]}
       />
-      <Input
-        type="password"
+      <PasswordInput
         name="password"
         label="Password"
         placeholder="At least 8 characters"

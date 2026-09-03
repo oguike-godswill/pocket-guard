@@ -47,18 +47,33 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={{ toast }}>
       {children}
       <div
-        className="pointer-events-none fixed bottom-4 right-4 z-[60] flex w-full max-w-sm flex-col gap-2"
+        className="pointer-events-none fixed right-4 top-4 z-[60] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-2 sm:w-auto"
         aria-live="polite"
+        aria-atomic="false"
       >
         {toasts.map((t) => (
           <div
             key={t.id}
             className={cn(
-              "pointer-events-auto flex items-start gap-3 rounded-lg border bg-white p-4 shadow-lg animate-[slideUp_200ms_ease-out]",
-              t.type === "error" ? "border-danger/30" : "border-border"
+              "pointer-events-auto flex items-start gap-3 overflow-hidden rounded-xl border bg-white p-4 shadow-lg animate-[slideInRight_220ms_ease-out]",
+              t.type === "error"
+                ? "border-danger/30"
+                : t.type === "success"
+                  ? "border-positive/30"
+                  : "border-border"
             )}
-            role="status"
+            role={t.type === "error" ? "alert" : "status"}
           >
+            <span
+              className={cn(
+                "mt-0.5 h-5 w-1 shrink-0 rounded-full",
+                t.type === "error"
+                  ? "bg-danger"
+                  : t.type === "success"
+                    ? "bg-positive"
+                    : "bg-black"
+              )}
+            />
             {t.type === "success" && (
               <CheckCircle2 className="h-5 w-5 shrink-0 text-positive" />
             )}
@@ -69,7 +84,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             <p className="flex-1 text-sm text-black">{t.message}</p>
             <button
               onClick={() => remove(t.id)}
-              className="text-muted hover:text-black"
+              className="shrink-0 text-muted transition-colors hover:text-black"
               aria-label="Dismiss"
             >
               <X className="h-4 w-4" />
