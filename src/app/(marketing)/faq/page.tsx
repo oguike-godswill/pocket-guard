@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { PageHeader } from "@/components/marketing/page-header";
 import { cn } from "@/lib/cn";
+import { Animate, Stagger, StaggerItem } from "@/components/marketing/animate";
 
 const faqs = [
   {
@@ -38,6 +39,14 @@ const faqs = [
     q: "Can I use PocketGuard on mobile?",
     a: "Yes. PocketGuard is fully responsive and works well on desktop, tablet and mobile in your browser.",
   },
+  {
+    q: "What currencies are supported?",
+    a: "PocketGuard supports 8 currencies: NGN (Naira), USD (Dollar), GBP (Pound), EUR (Euro), KES (Kenyan Shilling), GHS (Ghanaian Cedi), ZAR (South African Rand), and EGP (Egyptian Pound).",
+  },
+  {
+    q: "Can I export my data?",
+    a: "Data export is on our roadmap. For now, you can view and manage all your records directly in the app.",
+  },
 ];
 
 export default function FaqPage() {
@@ -52,43 +61,42 @@ export default function FaqPage() {
       />
       <section className="border-b border-border">
         <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
-          <div className="space-y-2">
+          <Stagger className="space-y-2" staggerDelay={0.04}>
             {faqs.map((faq, i) => {
               const open = openIndex === i;
               return (
-                <div
-                  key={faq.q}
-                  className="overflow-hidden rounded-xl border border-border bg-white"
-                >
-                  <button
-                    className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
-                    onClick={() => setOpenIndex(open ? null : i)}
-                    aria-expanded={open}
-                    aria-controls={`faq-panel-${i}`}
-                  >
-                    <span className="font-medium text-black">{faq.q}</span>
-                    <ChevronDown
+                <StaggerItem key={faq.q}>
+                  <div className="overflow-hidden rounded-xl border border-border bg-white">
+                    <button
+                      className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+                      onClick={() => setOpenIndex(open ? null : i)}
+                      aria-expanded={open}
+                      aria-controls={`faq-panel-${i}`}
+                    >
+                      <span className="font-medium text-black">{faq.q}</span>
+                      <ChevronDown
+                        className={cn(
+                          "h-5 w-5 shrink-0 text-muted transition-transform duration-200",
+                          open && "rotate-180"
+                        )}
+                      />
+                    </button>
+                    <div
+                      id={`faq-panel-${i}`}
                       className={cn(
-                        "h-5 w-5 shrink-0 text-muted transition-transform duration-200",
-                        open && "rotate-180"
+                        "grid transition-all duration-200",
+                        open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
                       )}
-                    />
-                  </button>
-                  <div
-                    id={`faq-panel-${i}`}
-                    className={cn(
-                      "grid transition-all duration-200",
-                      open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-                    )}
-                  >
-                    <div className="overflow-hidden">
-                      <p className="px-5 pb-4 text-sm text-muted">{faq.a}</p>
+                    >
+                      <div className="overflow-hidden">
+                        <p className="px-5 pb-4 text-sm text-muted">{faq.a}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </StaggerItem>
               );
             })}
-          </div>
+          </Stagger>
         </div>
       </section>
     </>

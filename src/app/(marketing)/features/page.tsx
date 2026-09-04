@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+"use client";
+
 import Link from "next/link";
 import {
   ArrowRight,
@@ -10,14 +11,7 @@ import {
   Settings,
 } from "lucide-react";
 import { PageHeader } from "@/components/marketing/page-header";
-import { marketingPageMetadata } from "@/lib/seo";
-
-export const metadata: Metadata = marketingPageMetadata({
-  title: "Features",
-  description:
-    "Explore PocketGuard's features: transactions, monthly planning, savings goals, bills and analytics — all focused on Available to Spend.",
-  path: "/features",
-});
+import { Animate, Stagger, StaggerItem } from "@/components/marketing/animate";
 
 const features = [
   {
@@ -75,41 +69,42 @@ export default function FeaturesPage() {
 
       <section className="border-b border-border">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" staggerDelay={0.06}>
             {features.map((feature) => (
-              <div
-                key={feature.title}
-                className="rounded-xl border border-border bg-white p-6"
-              >
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-soft text-black">
-                  <feature.icon className="h-5 w-5" />
+              <StaggerItem key={feature.title}>
+                <div className="rounded-xl border border-border bg-white p-6 transition-shadow hover:shadow-md h-full">
+                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-soft text-black">
+                    <feature.icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-brand text-base font-semibold text-black">
+                    {feature.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-muted">
+                    {feature.description}
+                  </p>
                 </div>
-                <h3 className="font-brand text-base font-semibold text-black">
-                  {feature.title}
-                </h3>
-                <p className="mt-2 text-sm text-muted">
-                  {feature.description}
-                </p>
-              </div>
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
         </div>
       </section>
 
       <section className="bg-black text-white">
         <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6">
-          <h2 className="font-brand text-2xl font-bold sm:text-3xl">
-            Start planning today
-          </h2>
-          <p className="mx-auto mt-3 max-w-md text-white/70">
-            It's free. Create your account and see your first plan.
-          </p>
-          <Link
-            href="/register"
-            className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-white px-8 text-base font-semibold text-black transition-colors hover:bg-neutral-200"
-          >
-            Get started <ArrowRight className="h-4 w-4" />
-          </Link>
+          <Animate>
+            <h2 className="font-brand text-2xl font-bold sm:text-3xl">
+              Start planning today
+            </h2>
+            <p className="mx-auto mt-3 max-w-md text-white/70">
+              It's free. Create your account and see your first plan.
+            </p>
+            <Link
+              href="/register"
+              className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-white px-8 text-base font-semibold text-black transition-colors hover:bg-neutral-200"
+            >
+              Get started <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Animate>
         </div>
       </section>
     </>

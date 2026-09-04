@@ -1,15 +1,9 @@
-import type { Metadata } from "next";
+"use client";
+
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { PageHeader } from "@/components/marketing/page-header";
-import { marketingPageMetadata } from "@/lib/seo";
-
-export const metadata: Metadata = marketingPageMetadata({
-  title: "How it works",
-  description:
-    "Add your money, set your plan, and know what you can spend. Here's how PocketGuard works in three simple steps.",
-  path: "/how-it-works",
-});
+import { Animate, Stagger, StaggerItem } from "@/components/marketing/animate";
 
 const steps = [
   {
@@ -43,41 +37,42 @@ export default function HowItWorksPage() {
 
       <section className="border-b border-border">
         <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-          <ol className="space-y-8">
+          <Stagger className="space-y-8">
             {steps.map((step) => (
-              <li
-                key={step.number}
-                className="flex gap-6 rounded-xl border border-border bg-white p-6"
-              >
-                <span className="font-brand text-3xl font-bold text-black/10">
-                  {step.number}
-                </span>
-                <div>
-                  <h2 className="font-brand text-xl font-semibold text-black">
-                    {step.title}
-                  </h2>
-                  <p className="mt-2 text-muted">{step.description}</p>
-                </div>
-              </li>
+              <StaggerItem key={step.number}>
+                <li className="flex gap-6 rounded-xl border border-border bg-white p-6 list-none">
+                  <span className="font-brand text-3xl font-bold text-black/10">
+                    {step.number}
+                  </span>
+                  <div>
+                    <h2 className="font-brand text-xl font-semibold text-black">
+                      {step.title}
+                    </h2>
+                    <p className="mt-2 text-muted">{step.description}</p>
+                  </div>
+                </li>
+              </StaggerItem>
             ))}
-          </ol>
+          </Stagger>
         </div>
       </section>
 
       <section className="bg-black text-white">
         <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6">
-          <h2 className="font-brand text-2xl font-bold sm:text-3xl">
-            Ready to see how much you can spend?
-          </h2>
-          <p className="mx-auto mt-3 max-w-md text-white/70">
-            Create a free account and build your first plan in minutes.
-          </p>
-          <Link
-            href="/register"
-            className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-white px-8 text-base font-semibold text-black transition-colors hover:bg-neutral-200"
-          >
-            Get started <ArrowRight className="h-4 w-4" />
-          </Link>
+          <Animate>
+            <h2 className="font-brand text-2xl font-bold sm:text-3xl">
+              Ready to see how much you can spend?
+            </h2>
+            <p className="mx-auto mt-3 max-w-md text-white/70">
+              Create a free account and build your first plan in minutes.
+            </p>
+            <Link
+              href="/register"
+              className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-white px-8 text-base font-semibold text-black transition-colors hover:bg-neutral-200"
+            >
+              Get started <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Animate>
         </div>
       </section>
     </>
