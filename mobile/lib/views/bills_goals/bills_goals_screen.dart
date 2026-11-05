@@ -5,10 +5,19 @@ import '../../core/theme/app_theme.dart';
 import '../../models/models.dart';
 import '../../providers/app_providers.dart';
 
-class BillsGoalsScreen extends ConsumerWidget {
+class BillsGoalsScreen extends ConsumerStatefulWidget {
   final DashboardData data;
 
   const BillsGoalsScreen({super.key, required this.data});
+
+  @override
+  ConsumerState<BillsGoalsScreen> createState() => _BillsGoalsScreenState();
+}
+
+class _BillsGoalsScreenState extends ConsumerState<BillsGoalsScreen> {
+  final Set<String> _payingBillIds = {};
+
+  DashboardData get data => widget.data;
 
   String _formatMoney(double amount, String currency) {
     final symbol = currency == 'NGN' ? '₦' : '\$';
@@ -17,7 +26,7 @@ class BillsGoalsScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
@@ -204,26 +213,42 @@ class BillsGoalsScreen extends ConsumerWidget {
               ),
               const SizedBox(width: 10),
               ElevatedButton(
-                onPressed: () async {
-                  await ref.read(payBillProvider)(bill.id);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Marked "${bill.name}" as paid & scheduled next cycle!'),
-                        backgroundColor: AppTheme.positiveGreen,
-                      ),
-                    );
-                  }
-                },
+                onPressed: _payingBillIds.contains(bill.id)
+                    ? null
+                    : () async {
+                        setState(() => _payingBillIds.add(bill.id));
+                        try {
+                          await ref.read(payBillProvider)(bill.id);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Marked "${bill.name}" as paid & scheduled next cycle!'),
+                                backgroundColor: AppTheme.positiveGreen,
+                              ),
+                            );
+                          }
+                        } finally {
+                          if (mounted) {
+                            setState(() => _payingBillIds.remove(bill.id));
+                          }
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.positiveSoft,
                   foregroundColor: AppTheme.positiveGreen,
+                  disabledBackgroundColor: AppTheme.positiveSoft.withOpacity(0.6),
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   minimumSize: Size.zero,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: const Text('Mark Paid', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                child: _payingBillIds.contains(bill.id)
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(color: AppTheme.positiveGreen, strokeWidth: 2),
+                      )
+                    : const Text('Mark Paid', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
               ),
             ],
           ),
@@ -344,6 +369,7 @@ class BillsGoalsScreen extends ConsumerWidget {
     final nameCtrl = TextEditingController();
     final amountCtrl = TextEditingController();
     String frequency = 'monthly';
+    bool isSaving = false;
 
     showModalBottomSheet(
       context: context,
@@ -368,6 +394,7 @@ class BillsGoalsScreen extends ConsumerWidget {
                   const SizedBox(height: 16),
                   TextField(
                     controller: nameCtrl,
+                    enabled: !isSaving,
                     decoration: InputDecoration(
                       labelText: 'Bill Name (e.g. Electricity, Internet)',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -376,6 +403,7 @@ class BillsGoalsScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                   TextField(
                     controller: amountCtrl,
+                    enabled: !isSaving,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       labelText: 'Amount',
@@ -394,7 +422,7 @@ class BillsGoalsScreen extends ConsumerWidget {
                       DropdownMenuItem(value: 'monthly', child: Text('Monthly')),
                       DropdownMenuItem(value: 'yearly', child: Text('Yearly')),
                     ],
-                    onChanged: (v) => setModalState(() => frequency = v ?? 'monthly'),
+                    onChanged: isSaving ? null : (v) => setModalState(() => frequency = v ?? 'monthly'),
                   ),
                   const SizedBox(height: 18),
                   SizedBox(
@@ -404,21 +432,43 @@ class BillsGoalsScreen extends ConsumerWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryBlack,
                         foregroundColor: Colors.white,
+                        disabledBackgroundColor: AppTheme.primaryBlack.withOpacity(0.55),
+                        disabledForegroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      onPressed: () async {
-                        final amt = double.tryParse(amountCtrl.text.trim()) ?? 0;
-                        if (nameCtrl.text.trim().isNotEmpty && amt > 0) {
-                          await ref.read(createBillProvider)(
-                            name: nameCtrl.text.trim(),
-                            amount: amt,
-                            dueDate: DateTime.now().add(const Duration(days: 7)),
-                            frequency: frequency,
-                          );
-                          if (context.mounted) Navigator.pop(context);
-                        }
-                      },
-                      child: const Text('Save Bill', style: TextStyle(fontWeight: FontWeight.w700)),
+                      onPressed: isSaving
+                          ? null
+                          : () async {
+                              final amt = double.tryParse(amountCtrl.text.trim()) ?? 0;
+                              if (nameCtrl.text.trim().isEmpty || amt <= 0) return;
+
+                              setModalState(() => isSaving = true);
+                              try {
+                                await ref.read(createBillProvider)(
+                                  name: nameCtrl.text.trim(),
+                                  amount: amt,
+                                  dueDate: DateTime.now().add(const Duration(days: 7)),
+                                  frequency: frequency,
+                                );
+                                if (context.mounted) Navigator.pop(context);
+                              } catch (_) {
+                                if (context.mounted) setModalState(() => isSaving = false);
+                              }
+                            },
+                      child: isSaving
+                          ? const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2),
+                                ),
+                                SizedBox(width: 10),
+                                Text('Saving...', style: TextStyle(fontWeight: FontWeight.w700)),
+                              ],
+                            )
+                          : const Text('Save Bill', style: TextStyle(fontWeight: FontWeight.w700)),
                     ),
                   ),
                 ],
@@ -433,6 +483,7 @@ class BillsGoalsScreen extends ConsumerWidget {
   void _showAddGoalModal(BuildContext context, WidgetRef ref) {
     final nameCtrl = TextEditingController();
     final targetCtrl = TextEditingController();
+    bool isSaving = false;
 
     showModalBottomSheet(
       context: context,
@@ -440,61 +491,89 @@ class BillsGoalsScreen extends ConsumerWidget {
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Create Savings Goal', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-              const SizedBox(height: 16),
-              TextField(
-                controller: nameCtrl,
-                decoration: InputDecoration(
-                  labelText: 'Goal Name (e.g. Emergency Fund, New Laptop)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: targetCtrl,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Target Amount',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-              const SizedBox(height: 18),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.positiveGreen,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Create Savings Goal', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: nameCtrl,
+                    enabled: !isSaving,
+                    decoration: InputDecoration(
+                      labelText: 'Goal Name (e.g. Emergency Fund, New Laptop)',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
                   ),
-                  onPressed: () async {
-                    final target = double.tryParse(targetCtrl.text.trim()) ?? 0;
-                    if (nameCtrl.text.trim().isNotEmpty && target > 0) {
-                      await ref.read(createGoalProvider)(
-                        name: nameCtrl.text.trim(),
-                        targetAmount: target,
-                        targetDate: DateTime.now().add(const Duration(days: 180)),
-                      );
-                      if (context.mounted) Navigator.pop(context);
-                    }
-                  },
-                  child: const Text('Create Goal', style: TextStyle(fontWeight: FontWeight.w700)),
-                ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: targetCtrl,
+                    enabled: !isSaving,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Target Amount',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.positiveGreen,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: AppTheme.positiveGreen.withOpacity(0.55),
+                        disabledForegroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: isSaving
+                          ? null
+                          : () async {
+                              final target = double.tryParse(targetCtrl.text.trim()) ?? 0;
+                              if (nameCtrl.text.trim().isEmpty || target <= 0) return;
+
+                              setModalState(() => isSaving = true);
+                              try {
+                                await ref.read(createGoalProvider)(
+                                  name: nameCtrl.text.trim(),
+                                  targetAmount: target,
+                                  targetDate: DateTime.now().add(const Duration(days: 180)),
+                                );
+                                if (context.mounted) Navigator.pop(context);
+                              } catch (_) {
+                                if (context.mounted) setModalState(() => isSaving = false);
+                              }
+                            },
+                      child: isSaving
+                          ? const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2),
+                                ),
+                                SizedBox(width: 10),
+                                Text('Creating...', style: TextStyle(fontWeight: FontWeight.w700)),
+                              ],
+                            )
+                          : const Text('Create Goal', style: TextStyle(fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -502,6 +581,7 @@ class BillsGoalsScreen extends ConsumerWidget {
 
   void _showContributeModal(BuildContext context, WidgetRef ref, SavingsGoalModel goal, String currency) {
     final amountCtrl = TextEditingController();
+    bool isSaving = false;
 
     showModalBottomSheet(
       context: context,
@@ -509,49 +589,76 @@ class BillsGoalsScreen extends ConsumerWidget {
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Fund "${goal.name}"', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-              const SizedBox(height: 14),
-              TextField(
-                controller: amountCtrl,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Contribution Amount ($currency)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
               ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.positiveGreen,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Fund "${goal.name}"', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: amountCtrl,
+                    enabled: !isSaving,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Contribution Amount ($currency)',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
                   ),
-                  onPressed: () async {
-                    final amt = double.tryParse(amountCtrl.text.trim()) ?? 0;
-                    if (amt > 0) {
-                      await ref.read(contributeGoalProvider)(goalId: goal.id, amount: amt);
-                      if (context.mounted) Navigator.pop(context);
-                    }
-                  },
-                  child: const Text('Add Funds', style: TextStyle(fontWeight: FontWeight.w700)),
-                ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.positiveGreen,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: AppTheme.positiveGreen.withOpacity(0.55),
+                        disabledForegroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: isSaving
+                          ? null
+                          : () async {
+                              final amt = double.tryParse(amountCtrl.text.trim()) ?? 0;
+                              if (amt <= 0) return;
+
+                              setModalState(() => isSaving = true);
+                              try {
+                                await ref.read(contributeGoalProvider)(goalId: goal.id, amount: amt);
+                                if (context.mounted) Navigator.pop(context);
+                              } catch (_) {
+                                if (context.mounted) setModalState(() => isSaving = false);
+                              }
+                            },
+                      child: isSaving
+                          ? const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2),
+                                ),
+                                SizedBox(width: 10),
+                                Text('Adding Funds...', style: TextStyle(fontWeight: FontWeight.w700)),
+                              ],
+                            )
+                          : const Text('Add Funds', style: TextStyle(fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );

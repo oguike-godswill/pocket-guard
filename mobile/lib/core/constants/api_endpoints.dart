@@ -1,14 +1,14 @@
 import 'package:flutter/foundation.dart';
 
 class ApiEndpoints {
-  // Can be overridden via --dart-define=API_BASE_URL=https://your-domain.vercel.app/api
-  // Defaults to localhost on Web and your PC's Wi-Fi IP (192.168.100.25) on Android/iOS devices
+  // Can be overridden via --dart-define=API_BASE_URL=...
+  // Defaults directly to your live production Vercel backend so Android works out-of-the-box anywhere!
   static const String _envBaseUrl = String.fromEnvironment('API_BASE_URL');
 
   static String get defaultBaseUrl {
     if (_envBaseUrl.isNotEmpty) return _envBaseUrl;
     if (kIsWeb) return 'http://localhost:3000/api';
-    return 'http://192.168.100.25:3000/api';
+    return 'https://pocket-guard-psi.vercel.app/api';
   }
 
   // Auth

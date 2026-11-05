@@ -9,6 +9,8 @@ jobs:
   build-apk:
     name: Build PocketGuard Android APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -44,3 +46,14 @@ jobs:
           name: PocketGuard-Android-APK
           path: mobile/build/app/outputs/flutter-apk/PocketGuard-Android.apk
           retention-days: 30
+
+      - name: Publish Direct Download APK to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-apk
+          name: "PocketGuard Android APK (Latest Build)"
+          body: "Direct installable Android APK for PocketGuard."
+          files: mobile/build/app/outputs/flutter-apk/PocketGuard-Android.apk
+          prerelease: false
+          make_latest: true
+

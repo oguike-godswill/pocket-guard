@@ -808,6 +808,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final noteController = TextEditingController();
     String type = 'expense';
     String category = 'Food';
+    bool isSaving = false;
 
     showModalBottomSheet(
       context: context,
@@ -838,7 +839,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text('Log Money Entry', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                        IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(context)),
+                        IconButton(
+                          icon: const Icon(Icons.close, size: 20),
+                          onPressed: isSaving ? null : () => Navigator.pop(context),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -848,10 +852,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       children: [
                         Expanded(
                           child: GestureDetector(
-                            onTap: () => setModalState(() {
-                              type = 'expense';
-                              category = AppTheme.expenseCategories.first;
-                            }),
+                            onTap: isSaving
+                                ? null
+                                : () => setModalState(() {
+                                      type = 'expense';
+                                      category = AppTheme.expenseCategories.first;
+                                    }),
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 11),
                               decoration: BoxDecoration(
@@ -873,10 +879,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: GestureDetector(
-                            onTap: () => setModalState(() {
-                              type = 'income';
-                              category = AppTheme.incomeCategories.first;
-                            }),
+                            onTap: isSaving
+                                ? null
+                                : () => setModalState(() {
+                                      type = 'income';
+                                      category = AppTheme.incomeCategories.first;
+                                    }),
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 11),
                               decoration: BoxDecoration(
@@ -910,7 +918,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         final isSelected = category == cat;
                         final visual = AppTheme.getCategoryVisual(cat, isIncome: type == 'income');
                         return GestureDetector(
-                          onTap: () => setModalState(() => category = cat),
+                          onTap: isSaving ? null : () => setModalState(() => category = cat),
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             decoration: BoxDecoration(
@@ -941,6 +949,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
                     TextField(
                       controller: amountController,
+                      enabled: !isSaving,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       decoration: InputDecoration(
                         labelText: 'Amount',
@@ -950,6 +959,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     const SizedBox(height: 12),
                     TextField(
                       controller: noteController,
+                      enabled: !isSaving,
                       decoration: InputDecoration(
                         labelText: 'Note or Bill Name (auto-matches unpaid bills!)',
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -963,31 +973,61 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryBlack,
                           foregroundColor: Colors.white,
+                          disabledBackgroundColor: AppTheme.primaryBlack.withOpacity(0.55),
+                          disabledForegroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        onPressed: () async {
-                          final amt = double.tryParse(amountController.text.trim());
-                          if (amt != null && amt > 0) {
-                            final matchedBill = await ref.read(addTransactionProvider)(
-                              amount: amt,
-                              type: type,
-                              category: category,
-                              note: noteController.text.trim(),
-                            );
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                              if (matchedBill != null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Logged & auto-reconciled bill "$matchedBill" as paid! ⚡'),
-                                    backgroundColor: AppTheme.positiveGreen,
+                        onPressed: isSaving
+                            ? null
+                            : () async {
+                                final amt = double.tryParse(amountController.text.trim());
+                                if (amt == null || amt <= 0) return;
+
+                                setModalState(() => isSaving = true);
+                                try {
+                                  final matchedBill = await ref.read(addTransactionProvider)(
+                                    amount: amt,
+                                    type: type,
+                                    category: category,
+                                    note: noteController.text.trim(),
+                                  );
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                    if (matchedBill != null) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Logged & auto-reconciled bill "$matchedBill" as paid! ⚡'),
+                                          backgroundColor: AppTheme.positiveGreen,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                } catch (_) {
+                                  if (context.mounted) {
+                                    setModalState(() => isSaving = false);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Could not save entry. Please try again.'),
+                                        backgroundColor: AppTheme.dangerRed,
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                        child: isSaving
+                            ? const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2),
                                   ),
-                                );
-                              }
-                            }
-                          }
-                        },
-                        child: const Text('Save Entry', style: TextStyle(fontWeight: FontWeight.w800)),
+                                  SizedBox(width: 10),
+                                  Text('Saving...', style: TextStyle(fontWeight: FontWeight.w800)),
+                                ],
+                              )
+                            : const Text('Save Entry', style: TextStyle(fontWeight: FontWeight.w800)),
                       ),
                     ),
                   ],

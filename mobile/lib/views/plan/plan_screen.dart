@@ -5,10 +5,19 @@ import '../../core/theme/app_theme.dart';
 import '../../models/models.dart';
 import '../../providers/app_providers.dart';
 
-class PlanScreen extends ConsumerWidget {
+class PlanScreen extends ConsumerStatefulWidget {
   final DashboardData data;
 
   const PlanScreen({super.key, required this.data});
+
+  @override
+  ConsumerState<PlanScreen> createState() => _PlanScreenState();
+}
+
+class _PlanScreenState extends ConsumerState<PlanScreen> {
+  bool _isApplyingPreset = false;
+
+  DashboardData get data => widget.data;
 
   String _formatMoney(double amount, String currency) {
     final symbol = currency == 'NGN' ? '₦' : '\$';
@@ -17,7 +26,7 @@ class PlanScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final spentMap = data.spentByCategory;
     final totalPlanned = data.budgetItems.fold<double>(0, (s, b) => s + b.plannedAmount);
     final totalSpentInPlan = data.budgetItems.fold<double>(
@@ -154,15 +163,23 @@ class PlanScreen extends ConsumerWidget {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: () => _applySmartPreset(context, ref, data),
+                  onPressed: _isApplyingPreset ? null : () => _applySmartPreset(context, ref, data),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.positiveGreen,
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor: AppTheme.positiveGreen.withOpacity(0.55),
+                    disabledForegroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
-                  child: const Text('Apply', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                  child: _isApplyingPreset
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Text('Apply', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                 ),
               ],
             ),
@@ -301,29 +318,34 @@ class PlanScreen extends ConsumerWidget {
   }
 
   Future<void> _applySmartPreset(BuildContext context, WidgetRef ref, DashboardData data) async {
-    final now = DateTime.now();
-    final baseIncome = data.effectiveIncome > 0 ? data.effectiveIncome : 300000.0;
-    final items = [
-      {'category': 'Food', 'plannedAmount': (baseIncome * 0.20).roundToDouble()},
-      {'category': 'Transport', 'plannedAmount': (baseIncome * 0.10).roundToDouble()},
-      {'category': 'Housing', 'plannedAmount': (baseIncome * 0.25).roundToDouble()},
-      {'category': 'Bills', 'plannedAmount': (baseIncome * 0.10).roundToDouble()},
-      {'category': 'Shopping', 'plannedAmount': (baseIncome * 0.08).roundToDouble()},
-    ];
+    setState(() => _isApplyingPreset = true);
+    try {
+      final now = DateTime.now();
+      final baseIncome = data.effectiveIncome > 0 ? data.effectiveIncome : 300000.0;
+      final items = [
+        {'category': 'Food', 'plannedAmount': (baseIncome * 0.20).roundToDouble()},
+        {'category': 'Transport', 'plannedAmount': (baseIncome * 0.10).roundToDouble()},
+        {'category': 'Housing', 'plannedAmount': (baseIncome * 0.25).roundToDouble()},
+        {'category': 'Bills', 'plannedAmount': (baseIncome * 0.10).roundToDouble()},
+        {'category': 'Shopping', 'plannedAmount': (baseIncome * 0.08).roundToDouble()},
+      ];
 
-    await ref.read(savePlanProvider)(
-      year: now.year,
-      month: now.month,
-      items: items,
-    );
-
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Smart envelopes generated and applied!'),
-          backgroundColor: AppTheme.positiveGreen,
-        ),
+      await ref.read(savePlanProvider)(
+        year: now.year,
+        month: now.month,
+        items: items,
       );
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Smart envelopes generated and applied!'),
+            backgroundColor: AppTheme.positiveGreen,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isApplyingPreset = false);
     }
   }
 
@@ -335,6 +357,7 @@ class PlanScreen extends ConsumerWidget {
         text: existing != null && existing.plannedAmount > 0 ? existing.plannedAmount.toStringAsFixed(0) : '',
       );
     }
+    bool isSaving = false;
 
     showModalBottomSheet(
       context: context,
@@ -342,85 +365,115 @@ class PlanScreen extends ConsumerWidget {
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Configure Monthly Envelopes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                ...AppTheme.expenseCategories.map((cat) {
-                  final visual = AppTheme.getCategoryVisual(cat);
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Row(
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          width: 34,
-                          height: 34,
-                          decoration: BoxDecoration(color: visual.bgColor, borderRadius: BorderRadius.circular(8)),
-                          child: Icon(visual.icon, size: 16, color: visual.color),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(child: Text(cat, style: const TextStyle(fontWeight: FontWeight.w600))),
-                        SizedBox(
-                          width: 130,
-                          child: TextField(
-                            controller: controllers[cat],
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              hintText: '0',
-                              isDense: true,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                          ),
+                        const Text('Configure Monthly Envelopes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: isSaving ? null : () => Navigator.pop(context),
                         ),
                       ],
                     ),
-                  );
-                }),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryBlack,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    const SizedBox(height: 12),
+                    ...AppTheme.expenseCategories.map((cat) {
+                      final visual = AppTheme.getCategoryVisual(cat);
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 34,
+                              height: 34,
+                              decoration: BoxDecoration(color: visual.bgColor, borderRadius: BorderRadius.circular(8)),
+                              child: Icon(visual.icon, size: 16, color: visual.color),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(child: Text(cat, style: const TextStyle(fontWeight: FontWeight.w600))),
+                            SizedBox(
+                              width: 130,
+                              child: TextField(
+                                controller: controllers[cat],
+                                enabled: !isSaving,
+                                keyboardType: TextInputType.number,
+                                decoration: InputDecoration(
+                                  hintText: '0',
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryBlack,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: AppTheme.primaryBlack.withOpacity(0.55),
+                          disabledForegroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: isSaving
+                            ? null
+                            : () async {
+                                setModalState(() => isSaving = true);
+                                try {
+                                  final now = DateTime.now();
+                                  final List<Map<String, dynamic>> items = [];
+                                  controllers.forEach((cat, ctrl) {
+                                    final val = double.tryParse(ctrl.text.trim()) ?? 0;
+                                    if (val > 0) {
+                                      items.add({'category': cat, 'plannedAmount': val});
+                                    }
+                                  });
+                                  await ref.read(savePlanProvider)(year: now.year, month: now.month, items: items);
+                                  if (context.mounted) Navigator.pop(context);
+                                } catch (_) {
+                                  if (context.mounted) setModalState(() => isSaving = false);
+                                }
+                              },
+                        child: isSaving
+                            ? const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2),
+                                  ),
+                                  SizedBox(width: 10),
+                                  Text('Saving Plan...', style: TextStyle(fontWeight: FontWeight.w700)),
+                                ],
+                              )
+                            : const Text('Save Monthly Plan', style: TextStyle(fontWeight: FontWeight.w700)),
+                      ),
                     ),
-                    onPressed: () async {
-                      final now = DateTime.now();
-                      final List<Map<String, dynamic>> items = [];
-                      controllers.forEach((cat, ctrl) {
-                        final val = double.tryParse(ctrl.text.trim()) ?? 0;
-                        if (val > 0) {
-                          items.add({'category': cat, 'plannedAmount': val});
-                        }
-                      });
-                      await ref.read(savePlanProvider)(year: now.year, month: now.month, items: items);
-                      if (context.mounted) Navigator.pop(context);
-                    },
-                    child: const Text('Save Monthly Plan', style: TextStyle(fontWeight: FontWeight.w700)),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
