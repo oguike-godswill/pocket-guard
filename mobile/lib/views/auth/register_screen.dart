@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/pocket_guard_logo.dart';
 import '../../providers/app_providers.dart';
 import 'auth_background.dart';
 import 'auth_error_banner.dart';
@@ -133,6 +134,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          const PocketGuardLogo(size: 40, borderRadius: 12, showGlow: true),
+                          const SizedBox(height: 14),
                           // Tag pill
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

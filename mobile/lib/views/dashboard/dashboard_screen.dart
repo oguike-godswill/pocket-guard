@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/pocket_guard_logo.dart';
 import '../../providers/app_providers.dart';
 import '../../models/models.dart';
 import '../plan/plan_screen.dart';
@@ -32,19 +33,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       backgroundColor: AppTheme.backgroundLight,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: Row(
+        title: const Row(
           children: [
-            Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: AppTheme.primaryBlack,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.shield_outlined, color: Colors.white, size: 16),
-            ),
-            const SizedBox(width: 10),
-            const Text('PocketGuard'),
+            PocketGuardLogo(size: 32, borderRadius: 9),
+            SizedBox(width: 10),
+            Text('PocketGuard'),
           ],
         ),
         actions: [
