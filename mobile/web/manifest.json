@@ -1,0 +1,12 @@
+{
+    "name": "PocketGuard",
+    "short_name": "PocketGuard",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#0A0A0A",
+    "theme_color": "#0A0A0A",
+    "description": "Plan your money. Spend with confidence.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false
+}
+

@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=TikTok+Sans:opsz,wght@12..36,400..800&display=swap");
 @import "tailwindcss";
 
 @theme {
@@ -14,8 +15,8 @@
   --color-warning: #f59e0b;
   --color-warning-soft: #fffbeb;
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-brand: var(--font-plus-jakarta), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-manrope), "Manrope", "TikTok Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-brand: var(--font-tiktok), "TikTok Sans", var(--font-manrope), "Manrope", ui-sans-serif, system-ui, sans-serif;
 
   --radius-lg: 0.75rem;
   --radius-md: 0.5rem;

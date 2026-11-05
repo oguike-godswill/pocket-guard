@@ -45,6 +45,32 @@ export async function POST(request: NextRequest) {
     }
 
     const { amount, type, category, date, note } = parsed.data;
+
+    // Auto-Match Bill Reconciliation logic
+    let matchedBillName: string | null = null;
+    if (type === "expense") {
+      const candidateBills = await prisma.bill.findMany({
+        where: { userId: user.id, paid: false },
+      });
+
+      const matchedBill = candidateBills.find((bill) => {
+        const isExactAmount = Math.abs(Number(bill.amount) - amount) < 0.01;
+        const isNameMatched =
+          note?.toLowerCase().includes(bill.name.toLowerCase()) ||
+          bill.name.toLowerCase().includes(category.toLowerCase()) ||
+          category.toLowerCase().includes(bill.name.toLowerCase());
+        return isExactAmount && isNameMatched;
+      });
+
+      if (matchedBill) {
+        await prisma.bill.update({
+          where: { id: matchedBill.id },
+          data: { paid: true },
+        });
+        matchedBillName = matchedBill.name;
+      }
+    }
+
     const transaction = await prisma.transaction.create({
       data: {
         userId: user.id,
@@ -56,7 +82,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return Response.json({ ok: true, transaction });
+    return Response.json({ ok: true, transaction, matchedBillName });
   } catch (e) {
     if (e instanceof Error && e.message === "UNAUTHORIZED") return jsonError("Unauthorized", 401);
     return jsonError("Internal server error", 500);

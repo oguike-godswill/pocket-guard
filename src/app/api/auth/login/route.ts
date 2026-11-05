@@ -52,7 +52,11 @@ export async function POST(request: NextRequest) {
         onboardingCompleted: user.onboardingCompleted,
       },
     });
-  } catch {
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error) {
+    console.error("[POST /api/auth/login] Error:", error);
+    return Response.json(
+      { error: error instanceof Error ? error.message : "Internal server error" },
+      { status: 500 }
+    );
   }
 }
