@@ -1,34 +1,34 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Target, Shield, Heart, Lightbulb } from "lucide-react";
+import { ArrowRight, Target, Shield, Heart, Lightbulb, CheckCircle2 } from "lucide-react";
 import { PageHeader } from "@/components/marketing/page-header";
 import { Animate, Stagger, StaggerItem } from "@/components/marketing/animate";
 
 const values = [
   {
     icon: Target,
-    title: "Clarity over complexity",
+    title: "Clarity Over Complexity",
     description:
-      "Every feature is designed to answer one question: how much can I safely spend right now? If it doesn't help answer that, it doesn't belong.",
+      "Most money apps drown you in charts and double-entry accounting terms. PocketGuard is engineered to answer one urgent question: 'How much can I spend right now without regretting it?'",
   },
   {
     icon: Shield,
-    title: "Privacy first",
+    title: "Privacy as a First Principle",
     description:
-      "Your financial data is yours. We don't sell it, we don't access it unnecessarily, and we never connect to your bank.",
+      "Your financial life should never be scraped, tracked, or sold to lenders and advertisers. We never ask for bank credentials or third-party aggregation access.",
   },
   {
     icon: Heart,
-    title: "Built for real life",
+    title: "Honoring Real Life",
     description:
-      "Surprise expenses, irregular income, multiple savings goals — PocketGuard handles the messiness of everyday money.",
+      "Income isn't always linear, and unexpected costs happen. Our dynamic overspend absorption and amortized goal horizons bend with reality instead of making you feel guilty.",
   },
   {
     icon: Lightbulb,
-    title: "Honest by default",
+    title: "Guaranteed Transparency",
     description:
-      "No dark patterns, no hidden fees, no bait-and-switch. We charge what we say or nothing at all.",
+      "No dark patterns, sudden trial expirations, or paywalls blocking your historical reports. We build straightforward software that does what it promises.",
   },
 ];
 
@@ -36,106 +36,60 @@ export default function AboutPage() {
   return (
     <>
       <PageHeader
-        eyebrow="About"
-        title="Built around one question"
-        description="How much can I safely spend right now?"
+        eyebrow="Our Mission"
+        title="Built around one essential number"
+        description="We believe financial peace doesn't come from tracking 50 spreadsheet tabs — it comes from knowing what is genuinely safe to spend today."
       />
 
-      <section className="border-b border-border">
-        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+      {/* Story narrative */}
+      <section className="border-b border-border bg-white py-16 sm:py-24">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6">
           <Animate>
-            <div className="space-y-6 text-muted">
+            <div className="space-y-6 text-base sm:text-lg leading-relaxed text-neutral-600">
               <p>
-                PocketGuard started with a simple frustration: money planning
-                tools felt like accounting software, not something built for
-                everyday life. People don't want spreadsheets and ledgers — they
-                want to know they can spend without worrying.
+                <strong className="text-black font-semibold">PocketGuard</strong> started from a universal frustration: modern budgeting apps are designed like corporate accounting packages. They force you to link bank accounts, categorize hundreds of historical transactions, and leave you staring at complex graphs that don't tell you if you can afford dinner tonight.
               </p>
               <p>
-                So we built PocketGuard around a single, central number:
-                <span className="font-medium text-black"> Available to Spend</span>
-                . It brings your income, expenses, bills and savings into one
-                clear plan and tells you, right now, how much you can safely
-                spend.
+                Checking your bank balance is equally misleading. Seeing money in your checking account on a Tuesday gives no warning about rent due next Monday, your car insurance renewal next week, or the savings installment you promised yourself to set aside.
               </p>
               <p>
-                We keep the product calm, simple and trustworthy. No flashy
-                features, no gimmicks — just a clear, precise way to plan your
-                money.
-              </p>
-              <p>
-                PocketGuard respects your privacy. Your financial records are
-                yours alone, protected with secure sessions and access controls
-                on everything you do.
+                We rebuilt the personal budgeting equation around a single, honest metric: <span className="font-semibold text-black">Safe-to-Spend</span>. By automatically deducting unpaid bills, unspent category envelopes, and deadline-amortized savings goals from your effective income, you get one unmistakable number you can trust.
               </p>
             </div>
           </Animate>
 
           <Animate delay={0.1}>
-            <div className="mt-12 flex justify-center">
+            <div className="mt-12 flex items-center justify-start gap-4">
               <Link
                 href="/register"
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-black px-8 text-base font-medium text-white transition-colors hover:bg-neutral-800"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-black px-8 text-base font-semibold text-white shadow-md transition-all hover:bg-neutral-800 hover:-translate-y-0.5"
               >
-                Start planning <ArrowRight className="h-4 w-4" />
+                Join PocketGuard free <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </Animate>
         </div>
       </section>
 
-      {/* Values */}
-      <section className="border-b border-border bg-soft">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
-          <Animate>
-            <h2 className="font-brand text-3xl font-bold tracking-tight text-black">
-              What we believe
+      {/* Core Values */}
+      <section className="border-b border-border bg-soft py-16 sm:py-24">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="max-w-2xl">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-600">Our Principles</span>
+            <h2 className="mt-2 font-brand text-3xl font-extrabold tracking-tight text-black sm:text-4xl">
+              What guides our design decisions
             </h2>
-            <p className="mt-3 max-w-xl text-muted">
-              The principles behind every decision we make.
-            </p>
-          </Animate>
-          <Stagger className="mt-10 grid gap-6 sm:grid-cols-2">
-            {values.map((value) => (
-              <StaggerItem key={value.title}>
-                <div className="flex gap-4 rounded-xl border border-border bg-white p-6 h-full">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-black text-white">
-                    <value.icon className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-brand text-base font-semibold text-black">
-                      {value.title}
-                    </h3>
-                    <p className="mt-1 text-sm text-muted">
-                      {value.description}
-                    </p>
-                  </div>
-                </div>
-              </StaggerItem>
-            ))}
-          </Stagger>
-        </div>
-      </section>
+          </div>
 
-      {/* Numbers */}
-      <section className="border-b border-border">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
-          <Animate>
-            <h2 className="font-brand text-3xl font-bold tracking-tight text-black">
-              PocketGuard in numbers
-            </h2>
-          </Animate>
-          <Stagger className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { number: "8", label: "Currencies supported" },
-              { number: "12", label: "Spending categories" },
-              { number: "6", label: "Income categories" },
-              { number: "0", label: "Bank connections required" },
-            ].map((stat) => (
-              <StaggerItem key={stat.label}>
-                <div className="text-center rounded-xl border border-border bg-white p-6">
-                  <p className="font-brand text-4xl font-bold text-black">{stat.number}</p>
-                  <p className="mt-2 text-sm text-muted">{stat.label}</p>
+          <Stagger className="mt-12 grid gap-6 sm:grid-cols-2" staggerDelay={0.06}>
+            {values.map((v) => (
+              <StaggerItem key={v.title}>
+                <div className="rounded-2xl border border-border bg-white p-8 shadow-xs">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 text-black mb-5">
+                    <v.icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="font-brand text-xl font-bold text-black">{v.title}</h3>
+                  <p className="mt-2.5 text-sm leading-relaxed text-muted">{v.description}</p>
                 </div>
               </StaggerItem>
             ))}

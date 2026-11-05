@@ -9,6 +9,7 @@ export type ActionResult = {
   error?: string;
   fieldErrors?: Record<string, string[]>;
   success?: boolean;
+  matchedBillName?: string | null;
 };
 
 export async function createTransaction(input: {
@@ -17,7 +18,7 @@ export async function createTransaction(input: {
   category: string;
   date: string;
   note?: string;
-}) {
+}): Promise<ActionResult> {
   const user = await getCurrentUser();
   if (!user) return { error: "Not authenticated" };
 
@@ -32,6 +33,36 @@ export async function createTransaction(input: {
 
   const { amount, type, category, date, note } = parsed.data;
 
+  // Auto-Match Bill Reconciliation logic:
+  // If an expense is logged, look for an unpaid bill with matching or close name/category/amount
+  let matchedBillName: string | null = null;
+  if (type === "expense") {
+    const candidateBills = await prisma.bill.findMany({
+      where: {
+        userId: user.id,
+        paid: false,
+      },
+    });
+
+    const expenseDate = new Date(date);
+    const matchedBill = candidateBills.find((bill) => {
+      const isExactAmount = Math.abs(Number(bill.amount) - amount) < 0.01;
+      const isNameMatched =
+        note?.toLowerCase().includes(bill.name.toLowerCase()) ||
+        bill.name.toLowerCase().includes(category.toLowerCase()) ||
+        category.toLowerCase().includes(bill.name.toLowerCase());
+      return isExactAmount && isNameMatched;
+    });
+
+    if (matchedBill) {
+      await prisma.bill.update({
+        where: { id: matchedBill.id },
+        data: { paid: true },
+      });
+      matchedBillName = matchedBill.name;
+    }
+  }
+
   await prisma.transaction.create({
     data: {
       userId: user.id,
@@ -45,8 +76,12 @@ export async function createTransaction(input: {
 
   revalidatePath("/dashboard");
   revalidatePath("/transactions");
+  revalidatePath("/bills");
   revalidatePath("/analytics");
-  return { success: true };
+  return {
+    success: true,
+    matchedBillName,
+  };
 }
 
 export async function updateTransaction(
@@ -58,7 +93,7 @@ export async function updateTransaction(
     date: string;
     note?: string;
   }
-) {
+): Promise<ActionResult> {
   const user = await getCurrentUser();
   if (!user) return { error: "Not authenticated" };
 
@@ -269,10 +304,45 @@ export async function markBillPaid(id: string, paid: boolean) {
   const user = await getCurrentUser();
   if (!user) return { error: "Not authenticated" };
 
-  const owned = await prisma.bill.findFirst({ where: { id, userId: user.id } });
-  if (!owned) return { error: "Not found" };
+  const bill = await prisma.bill.findFirst({ where: { id, userId: user.id } });
+  if (!bill) return { error: "Not found" };
 
   await prisma.bill.update({ where: { id }, data: { paid } });
+
+  // Intelligent Lifecycle: If recurring bill is marked paid, advance/create next cycle
+  if (paid) {
+    const nextDueDate = new Date(bill.dueDate);
+    if (bill.frequency === "weekly") {
+      nextDueDate.setDate(nextDueDate.getDate() + 7);
+    } else if (bill.frequency === "yearly") {
+      nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
+    } else {
+      // Monthly default
+      nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+    }
+
+    // Check if next cycle already exists
+    const existingNext = await prisma.bill.findFirst({
+      where: {
+        userId: user.id,
+        name: bill.name,
+        dueDate: nextDueDate,
+      },
+    });
+
+    if (!existingNext) {
+      await prisma.bill.create({
+        data: {
+          userId: user.id,
+          name: bill.name,
+          amount: bill.amount,
+          frequency: bill.frequency,
+          dueDate: nextDueDate,
+          paid: false,
+        },
+      });
+    }
+  }
 
   revalidatePath("/dashboard");
   revalidatePath("/bills");

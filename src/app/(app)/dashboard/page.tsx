@@ -11,7 +11,16 @@ import {
   Wallet,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
-import { getDashboardData, currentPeriod, calculateAvailableToSpend } from "@/lib/calculations";
+import {
+  getDashboardData,
+  currentPeriod,
+  calculateAvailableToSpend,
+  calculateEffectiveIncome,
+  calculateMonthlySavingsCommitment,
+  calculateTotalUpcomingBills,
+  calculateBudgetStatus,
+  calculateDailySafeToSpend,
+} from "@/lib/calculations";
 import { formatMoney } from "@/lib/money";
 import { StatCard } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -40,21 +49,13 @@ export default async function DashboardPage({
 
   const available = calculateAvailableToSpend(data);
   const currency = data.user?.currency ?? "NGN";
+  const dailyMetrics = calculateDailySafeToSpend(available, data.year, data.month);
 
-  const totalIncome = data.incomeTxns.reduce((s, t) => s + Number(t.amount), 0) +
-    data.incomes.reduce((s, i) => s + Number(i.amount), 0);
-  const totalPlanned = (data.plan?.budgetItems ?? []).reduce(
-    (s, i) => s + Number(i.plannedAmount),
-    0
-  );
-  const totalBills = (data.bills ?? []).reduce(
-    (s, b) => s + (b.paid ? 0 : Number(b.amount)),
-    0
-  );
-  const totalGoals = data.goals.reduce((s, g) => {
-    const remaining = Number(g.targetAmount) - Number(g.currentAmount);
-    return s + Math.max(0, remaining);
-  }, 0);
+  const effectiveIncome = calculateEffectiveIncome(data);
+  const budgetStatus = calculateBudgetStatus(data);
+  const totalPlanned = budgetStatus.totalPlanned;
+  const totalBills = calculateTotalUpcomingBills(data);
+  const monthlySavingsGoal = calculateMonthlySavingsCommitment(data);
 
   const spentByCategory = new Map<string, number>();
   for (const t of data.expenseTxns) {
@@ -79,27 +80,43 @@ export default async function DashboardPage({
 
       {/* Available to Spend hero */}
       <section className="relative overflow-hidden rounded-2xl bg-black p-6 text-white sm:p-8">
-        <div className="relative z-10">
-          <p className="text-sm text-white/70">Available to Spend</p>
-          <p className="mt-1 font-brand text-3xl font-bold tracking-tight tabular sm:text-5xl">
-            {formatMoney(available, currency)}
-          </p>
-          <p className="mt-2 text-sm text-white/70">
-            {available >= 0
-              ? "You can safely spend this right now."
-              : "Your commitments exceed your money — review your plan."}
-          </p>
+        <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <p className="text-sm font-medium uppercase tracking-wider text-white/70">Safe-to-Spend Balance</p>
+            </div>
+            <p className="mt-2 font-brand text-4xl font-bold tracking-tight tabular sm:text-6xl">
+              {formatMoney(available, currency)}
+            </p>
+            <p className="mt-2 text-sm text-white/70">
+              {available >= 0
+                ? "Safe after bills, monthly savings commitments & envelopes."
+                : "Your commitments exceed available funds — adjust your plan."}
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-white/10 p-4 backdrop-blur-sm sm:min-w-[220px]">
+            <p className="text-xs font-medium uppercase tracking-wider text-white/60">Daily Spending Pace</p>
+            <p className="mt-1 font-brand text-2xl font-bold tabular text-white">
+              {formatMoney(dailyMetrics.dailyAmount, currency)}
+              <span className="text-xs font-normal text-white/60"> / day</span>
+            </p>
+            <p className="mt-1 text-xs text-white/60">
+              {dailyMetrics.daysRemaining} days remaining this month
+            </p>
+          </div>
         </div>
-        <div className="absolute right-6 top-6 hidden sm:block" aria-hidden="true">
-          <TrendingUp className="h-10 w-10 text-white/20" />
+        <div className="absolute right-6 top-6 hidden lg:block" aria-hidden="true">
+          <TrendingUp className="h-12 w-12 text-white/10" />
         </div>
       </section>
 
       {/* Stat cards */}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Income this period"
-          value={formatMoney(totalIncome, currency)}
+          label="Effective income"
+          value={formatMoney(effectiveIncome, currency)}
           tone="positive"
         />
         <StatCard
@@ -108,9 +125,9 @@ export default async function DashboardPage({
           hint={data.plan ? `${data.plan.budgetItems.length} categories` : "No plan yet"}
         />
         <StatCard
-          label="Savings commitments"
-          value={formatMoney(totalGoals, currency)}
-          hint={data.goals.length ? `${data.goals.length} goals` : "No goals yet"}
+          label="Monthly savings target"
+          value={formatMoney(monthlySavingsGoal, currency)}
+          hint={data.goals.length ? `${data.goals.length} active goals` : "No goals yet"}
         />
         <StatCard
           label="Upcoming bills"

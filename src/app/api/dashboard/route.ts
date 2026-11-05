@@ -1,6 +1,13 @@
 import { NextRequest } from "next/server";
 import { requireApiAuth, jsonError } from "@/lib/api-auth";
-import { getDashboardData, calculateAvailableToSpend, calculateCurrentMoney, calculateTotalPlannedExpenses, calculateTotalSavingsCommitments, calculateTotalUpcomingBills } from "@/lib/calculations";
+import {
+  getDashboardData,
+  calculateAvailableToSpend,
+  calculateEffectiveIncome,
+  calculateTotalPlannedExpenses,
+  calculateMonthlySavingsCommitment,
+  calculateTotalUpcomingBills,
+} from "@/lib/calculations";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,14 +17,15 @@ export async function GET(request: NextRequest) {
 
     const data = await getDashboardData(user.id, period as any);
     const available = calculateAvailableToSpend(data);
-    const currentMoney = calculateCurrentMoney(data);
+    const effectiveIncome = calculateEffectiveIncome(data);
     const plannedExpenses = calculateTotalPlannedExpenses(data);
-    const savingsCommitments = calculateTotalSavingsCommitments(data);
+    const savingsCommitments = calculateMonthlySavingsCommitment(data);
     const upcomingBills = calculateTotalUpcomingBills(data);
 
     return Response.json({
       availableToSpend: available,
-      currentMoney,
+      currentMoney: effectiveIncome,
+      effectiveIncome,
       plannedExpenses,
       savingsCommitments,
       upcomingBills,

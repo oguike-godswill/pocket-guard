@@ -84,7 +84,14 @@ export function TransactionForm({
 
     setSaving(false);
     if (result.success) {
-      toast("success", isNew ? "Transaction added" : "Transaction updated");
+      if (result.matchedBillName) {
+        toast(
+          "success",
+          `Transaction added & auto-matched unpaid bill "${result.matchedBillName}" as paid!`
+        );
+      } else {
+        toast("success", isNew ? "Transaction added" : "Transaction updated");
+      }
       onClose();
       router.refresh();
     } else if (result.error) {

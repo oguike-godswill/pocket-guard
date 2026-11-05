@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Save, AlertTriangle, Wallet } from "lucide-react";
+import { Plus, Save, AlertTriangle, Wallet, Copy, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, StatCard } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -10,7 +10,7 @@ import { Select } from "@/components/ui/select";
 import { EmptyState } from "@/components/ui/empty-state";
 import { MonthNav } from "@/components/app/month-nav";
 import { useToast } from "@/components/ui/toast";
-import { saveMonthlyPlan } from "@/lib/actions/plan";
+import { saveMonthlyPlan, copyPreviousMonthPlan, generateSmartBudgetFromHistory } from "@/lib/actions/plan";
 import { formatMoney } from "@/lib/money";
 import { EXPENSE_CATEGORIES } from "@/lib/categories";
 
@@ -59,6 +59,31 @@ export function PlanClient({
     { category: string; plannedAmount: string }[]
   >(initialItems);
   const [saving, setSaving] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  async function handleCopyPreviousMonth() {
+    setActionLoading("copy");
+    const res = await copyPreviousMonthPlan(year, month);
+    setActionLoading(null);
+    if (res.success) {
+      toast("success", "Successfully copied last month's budget!");
+      router.refresh();
+    } else {
+      toast("error", res.error ?? "Failed to copy previous budget.");
+    }
+  }
+
+  async function handleSmartAutoBudget() {
+    setActionLoading("smart");
+    const res = await generateSmartBudgetFromHistory(year, month);
+    setActionLoading(null);
+    if (res.success) {
+      toast("success", "Generated smart budget from your 3-month spending history!");
+      router.refresh();
+    } else {
+      toast("error", res.error ?? "Could not generate budget suggestions.");
+    }
+  }
 
   const spentByCategory = useMemo(() => {
     const map = new Map<string, number>();
@@ -150,11 +175,34 @@ export function PlanClient({
       </section>
 
       {!hasPlan && (
-        <EmptyState
-          icon={<Wallet className="h-5 w-5" />}
-          title="No plan for this month"
-          description="Set how much you plan to spend in each category below, then save your plan."
-        />
+        <div className="rounded-2xl border border-border bg-white p-6 shadow-xs">
+          <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+            <div>
+              <h3 className="font-brand text-base font-semibold text-black">Start this month's budget</h3>
+              <p className="mt-1 text-sm text-muted">
+                Quickly roll over last month or generate a realistic plan from your spending habits.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleCopyPreviousMonth}
+                loading={actionLoading === "copy"}
+              >
+                <Copy className="h-4 w-4" /> Copy last month
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleSmartAutoBudget}
+                loading={actionLoading === "smart"}
+              >
+                <Sparkles className="h-4 w-4" /> Smart 3-mo Auto-Budget
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
       <Card>

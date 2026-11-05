@@ -14,60 +14,139 @@ import {
   ChevronDown,
   Zap,
   BarChart3,
+  Sparkles,
+  Flame,
+  CheckCircle2,
+  Lock,
 } from "lucide-react";
 import { Animate, Stagger, StaggerItem } from "@/components/marketing/animate";
 import { useState } from "react";
 
 const demoValues = [
-  { label: "Income this month", amount: "₦500,000", positive: true },
-  { label: "Planned expenses", amount: "₦214,600" },
-  { label: "Savings commitments", amount: "₦100,000" },
+  { label: "Effective monthly income", amount: "₦650,000", positive: true },
+  { label: "Upcoming bills reserved", amount: "₦85,000" },
+  { label: "Envelope budgets allocated", amount: "₦240,000" },
+  { label: "Goal contribution (amortized)", amount: "₦65,000" },
 ];
 
 const faqs = [
   {
-    q: "Is PocketGuard really free?",
-    a: "Yes. Plan your money, track spending, and know what you can safely spend — no hidden costs, no trial limits.",
+    q: "Is PocketGuard really 100% free?",
+    a: "Yes. Plan your money, track actual expenses, calculate your daily burn pace, and know what you can safely spend — with zero paywalls or trial limits.",
   },
   {
-    q: "Do I need to connect my bank account?",
-    a: "No. You enter your income and expenses yourself. No bank connection required, and we never pull data from linked accounts.",
+    q: "Do I have to connect my bank account?",
+    a: "No. PocketGuard is privacy-first. You control your figures with zero third-party bank screen-scraping or linked account access.",
   },
   {
-    q: "How does Available to Spend work?",
-    a: "It subtracts your bills, planned expenses, and savings commitments from your income. One clear number, updated in real time.",
+    q: "How does Safe-to-Spend differ from bank balance?",
+    a: "Your bank balance tells you what you have today, but ignores tomorrow's rent, upcoming subscriptions, and unspent grocery budgets. Safe-to-Spend deducts all future commitments so you never accidentally overspend.",
   },
   {
-    q: "Can I use it on my phone?",
-    a: "Yes. PocketGuard works great on mobile, tablet, and desktop right in your browser.",
+    q: "How does Auto-Match bill reconciliation work?",
+    a: "When you log an expense that matches an unpaid bill's amount or keyword (like 'Internet' or 'Electricity'), PocketGuard automatically reconciles that bill as paid and sets up the next billing cycle.",
+  },
+  {
+    q: "Can I use PocketGuard seamlessly on mobile?",
+    a: "Absolutely. PocketGuard is engineered to feel like a high-performance native web application on iOS, Android, tablet, and desktop.",
   },
 ];
 
-function AvailableToSpendHeroCard() {
+function InteractiveLivePreviewCard() {
+  const [activeTab, setActiveTab] = useState<"spend" | "pace">("spend");
+
   return (
-    <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-border bg-white shadow-xl shadow-neutral-200/50">
-      <div className="border-b border-border p-6">
-        <p className="text-sm text-muted">Available to Spend</p>
-        <p className="mt-1 font-brand text-4xl font-bold tracking-tight text-black tabular">
-          ₦185,400
-        </p>
-        <p className="mt-2 text-xs text-positive">
-          You can safely spend this right now.
-        </p>
+    <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-2xl shadow-neutral-900/10 transition-all">
+      {/* Top subtle highlight gradient */}
+      <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-400 to-black" />
+
+      {/* Header section */}
+      <div className="border-b border-border/80 bg-neutral-900 p-6 text-white sm:p-7">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+            </span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-neutral-300">
+              Live Safe-to-Spend Engine
+            </span>
+          </div>
+
+          {/* Toggle pill */}
+          <div className="flex rounded-full bg-white/10 p-0.5 text-xs">
+            <button
+              onClick={() => setActiveTab("spend")}
+              className={`rounded-full px-2.5 py-1 font-medium transition-all ${
+                activeTab === "spend"
+                  ? "bg-white text-black shadow-xs"
+                  : "text-white/70 hover:text-white"
+              }`}
+            >
+              Balance
+            </button>
+            <button
+              onClick={() => setActiveTab("pace")}
+              className={`rounded-full px-2.5 py-1 font-medium transition-all ${
+                activeTab === "pace"
+                  ? "bg-white text-black shadow-xs"
+                  : "text-white/70 hover:text-white"
+              }`}
+            >
+              Daily Pace
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          {activeTab === "spend" ? (
+            <div>
+              <p className="font-brand text-4xl font-extrabold tracking-tight tabular sm:text-5xl">
+                ₦260,000
+              </p>
+              <p className="mt-1.5 flex items-center gap-1.5 text-xs text-emerald-300 font-medium">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Guaranteed safe after bills, envelopes & goals
+              </p>
+            </div>
+          ) : (
+            <div>
+              <p className="font-brand text-4xl font-extrabold tracking-tight tabular text-emerald-400 sm:text-5xl">
+                ₦14,440 <span className="text-sm font-normal text-white/60">/ day</span>
+              </p>
+              <p className="mt-1.5 flex items-center gap-1.5 text-xs text-neutral-300">
+                <Flame className="h-3.5 w-3.5 text-amber-400" />
+                18 days remaining · spend under this to stay green
+              </p>
+            </div>
+          )}
+        </div>
       </div>
-      <div className="space-y-4 p-6">
+
+      {/* Breakdown ledger */}
+      <div className="space-y-3.5 p-6 bg-white">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+          Active Monthly Deductions
+        </p>
         {demoValues.map((v) => (
-          <div key={v.label} className="flex items-center justify-between">
-            <span className="flex items-center gap-2 text-sm text-muted">
+          <div
+            key={v.label}
+            className="flex items-center justify-between rounded-xl p-2 transition-colors hover:bg-soft"
+          >
+            <span className="flex items-center gap-2.5 text-sm text-neutral-700">
               {v.positive ? (
-                <TrendingUp className="h-4 w-4 text-positive" />
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-positive">
+                  <TrendingUp className="h-4 w-4" />
+                </div>
               ) : (
-                <Receipt className="h-4 w-4 text-muted" />
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600">
+                  <Receipt className="h-4 w-4" />
+                </div>
               )}
               {v.label}
             </span>
             <span
-              className={`font-medium tabular ${
+              className={`font-semibold tabular text-sm ${
                 v.positive ? "text-positive" : "text-black"
               }`}
             >
@@ -76,12 +155,15 @@ function AvailableToSpendHeroCard() {
           </div>
         ))}
       </div>
-      <div className="border-t border-border bg-soft p-4">
-        <div className="flex items-center gap-2 text-xs text-muted">
-          <Plus className="h-4 w-4 text-positive" />
-          <span>
-            <span className="font-medium text-black">Add income</span> · Add
-            expense · Add bill
+
+      {/* Footer bar */}
+      <div className="border-t border-border bg-neutral-50/80 px-6 py-4">
+        <div className="flex items-center justify-between text-xs text-muted">
+          <span className="flex items-center gap-1.5 font-medium text-black">
+            <Sparkles className="h-3.5 w-3.5 text-emerald-600" /> Auto-Rollover enabled
+          </span>
+          <span className="rounded-md bg-neutral-200/60 px-2 py-0.5 font-mono text-[11px] text-neutral-700">
+            Smart Budget v2
           </span>
         </div>
       </div>
@@ -99,18 +181,16 @@ function FaqItem({
   onClick: () => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-white">
+    <div className="overflow-hidden rounded-2xl border border-border bg-white transition-all hover:border-neutral-300">
       <button
-        className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
         onClick={onClick}
         aria-expanded={isOpen}
       >
-        <span className="font-medium text-black">{faq.q}</span>
-        <ChevronDown
-          className={`h-5 w-5 shrink-0 text-muted transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
-          }`}
-        />
+        <span className="font-semibold text-black text-base">{faq.q}</span>
+        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-soft transition-transform duration-200 ${isOpen ? "rotate-180 bg-neutral-200" : ""}`}>
+          <ChevronDown className="h-4 w-4 text-neutral-700" />
+        </div>
       </button>
       <div
         className={`grid transition-all duration-300 ease-in-out ${
@@ -118,7 +198,7 @@ function FaqItem({
         }`}
       >
         <div className="overflow-hidden">
-          <p className="px-5 pb-4 text-sm text-muted">{faq.a}</p>
+          <p className="px-6 pb-5 text-sm leading-relaxed text-muted">{faq.a}</p>
         </div>
       </div>
     </div>
@@ -130,397 +210,343 @@ export default function HomePage() {
 
   return (
     <>
-      {/* Hero */}
-      <section className="border-b border-border bg-soft">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
-          <div className="grid items-center gap-12 lg:grid-cols-2">
-            <Animate variant="slideRight">
-              <h1 className="font-brand text-4xl font-bold leading-tight tracking-tight text-black sm:text-5xl">
-                Plan your money.
-                <br />
-                Spend with confidence.
-              </h1>
-              <p className="mt-4 max-w-md text-lg text-muted">
-                PocketGuard brings your income, expenses, bills and savings
-                into one clear plan. Know exactly how much you can safely spend
-                right now.
-              </p>
-              <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted">
-                <span className="flex items-center gap-1.5">
-                  <Check className="h-4 w-4 text-positive" /> Simple
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Check className="h-4 w-4 text-positive" /> Clear
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Check className="h-4 w-4 text-positive" /> Private
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Check className="h-4 w-4 text-positive" /> Built for everyday
-                  money planning
-                </span>
-              </div>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Link
-                  href="/register"
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-black px-8 text-base font-medium text-white transition-colors hover:bg-neutral-800"
-                >
-                  Get started free <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="/how-it-works"
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-border bg-white px-6 text-base font-medium text-black transition-colors hover:bg-soft"
-                >
-                  See how it works
-                </Link>
-              </div>
-            </Animate>
-            <Animate variant="slideLeft" delay={0.15} className="flex justify-center lg:justify-end">
-              <AvailableToSpendHeroCard />
-            </Animate>
+      {/* Hero Section */}
+      <section className="relative overflow-hidden border-b border-border bg-gradient-to-b from-neutral-50/80 via-white to-soft pt-6 pb-20 lg:py-28">
+        {/* Soft decorative background blurs */}
+        <div className="pointer-events-none absolute -top-40 right-0 h-96 w-96 rounded-full bg-emerald-100/40 blur-3xl" />
+        <div className="pointer-events-none absolute top-40 left-10 h-72 w-72 rounded-full bg-neutral-200/30 blur-3xl" />
+
+        <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="grid items-center gap-12 lg:grid-cols-12">
+            
+            {/* Left pitch */}
+            <div className="lg:col-span-7">
+              <Animate variant="slideRight">
+                {/* Pill badge */}
+                <div className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3.5 py-1.5 shadow-xs">
+                  <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs font-semibold tracking-wide text-neutral-800">
+                    Safe-to-Spend & Daily Burn Engine
+                  </span>
+                </div>
+
+                <h1 className="mt-5 font-brand text-4xl font-extrabold leading-[1.1] tracking-tight text-black sm:text-6xl">
+                  Plan your money.
+                  <br />
+                  <span className="text-neutral-500">Spend with zero guilt.</span>
+                </h1>
+
+                <p className="mt-5 max-w-xl text-lg leading-relaxed text-neutral-600 sm:text-xl">
+                  PocketGuard connects your real income, bills, category envelopes, and savings goals into one live calculation. Know exactly how much you can spend today without ever coming up short.
+                </p>
+
+                {/* Trust bullets */}
+                <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-2.5 text-sm font-medium text-neutral-700">
+                  <span className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-positive" /> No bank connection required
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-positive" /> Auto-match bill payments
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-positive" /> 1-click smart budgeting
+                  </span>
+                </div>
+
+                {/* CTA Buttons */}
+                <div className="mt-9 flex flex-wrap items-center gap-3">
+                  <Link
+                    href="/register"
+                    className="inline-flex h-13 items-center justify-center gap-2.5 rounded-xl bg-black px-8 text-base font-semibold text-white shadow-lg shadow-black/10 transition-all hover:bg-neutral-800 hover:shadow-xl hover:-translate-y-0.5"
+                  >
+                    Get started free <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    href="/how-it-works"
+                    className="inline-flex h-13 items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white px-6 text-base font-semibold text-neutral-900 transition-all hover:bg-neutral-50 hover:border-neutral-400"
+                  >
+                    Explore mechanics
+                  </Link>
+                </div>
+              </Animate>
+            </div>
+
+            {/* Right Interactive Mockup Card */}
+            <div className="lg:col-span-5 flex justify-center lg:justify-end">
+              <Animate variant="slideLeft" delay={0.15}>
+                <InteractiveLivePreviewCard />
+              </Animate>
+            </div>
+
           </div>
         </div>
       </section>
 
-      {/* Problem section */}
-      <section className="border-b border-border">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
-          <Animate>
-            <h2 className="max-w-2xl font-brand text-3xl font-bold tracking-tight text-black">
-              Does your money feel scattered?
+      {/* Problem Comparison Section */}
+      <section className="border-b border-border bg-white py-20 sm:py-24">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <Animate className="max-w-2xl">
+            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-600">The Problem</span>
+            <h2 className="mt-2 font-brand text-3xl font-extrabold tracking-tight text-black sm:text-4xl">
+              Why your bank balance lies to you.
             </h2>
-            <p className="mt-3 max-w-xl text-muted">
-              Too many expenses, surprise bills, unclear spending limits and
-              vague savings goals. PocketGuard turns that into one clear, simple
-              plan.
+            <p className="mt-4 text-base leading-relaxed text-muted">
+              Seeing money in your checking account gives a false sense of security. It doesn't know about upcoming subscriptions, utility bills due next week, or emergency fund allocations.
             </p>
           </Animate>
-          <Stagger className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+          <Stagger className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <StaggerItem>
-              <div className="rounded-xl border border-border bg-white p-6">
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-soft text-black">
+              <div className="group rounded-2xl border border-border bg-white p-7 transition-all hover:border-black/30 hover:shadow-sm">
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 text-black group-hover:bg-black group-hover:text-white transition-colors">
                   <Receipt className="h-5 w-5" />
                 </div>
-                <h3 className="font-brand text-base font-semibold text-black">Too many expenses</h3>
-                <p className="mt-2 text-sm text-muted">Every small purchase adds up. See where your money actually goes.</p>
+                <h3 className="font-brand text-lg font-bold text-black">Micro-Expense Creep</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted">
+                  Small untracked purchases quietly drain your buffer until you're stressed by mid-month.
+                </p>
               </div>
             </StaggerItem>
+
             <StaggerItem>
-              <div className="rounded-xl border border-border bg-white p-6">
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-soft text-black">
+              <div className="group rounded-2xl border border-border bg-white p-7 transition-all hover:border-black/30 hover:shadow-sm">
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 text-black group-hover:bg-black group-hover:text-white transition-colors">
                   <CalendarClock className="h-5 w-5" />
                 </div>
-                <h3 className="font-brand text-base font-semibold text-black">Surprise bills</h3>
-                <p className="mt-2 text-sm text-muted">Upcoming and recurring bills, so nothing catches you off guard.</p>
+                <h3 className="font-brand text-lg font-bold text-black">Surprise Recurring Bills</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted">
+                  Quarterly hosting, yearly car insurance, or monthly utility bills hitting right after you spend.
+                </p>
               </div>
             </StaggerItem>
+
             <StaggerItem>
-              <div className="rounded-xl border border-border bg-white p-6">
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-soft text-black">
-                  <TrendingUp className="h-5 w-5" />
+              <div className="group rounded-2xl border border-border bg-white p-7 transition-all hover:border-black/30 hover:shadow-sm">
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 text-black group-hover:bg-black group-hover:text-white transition-colors">
+                  <Flame className="h-5 w-5" />
                 </div>
-                <h3 className="font-brand text-base font-semibold text-black">Unclear limits</h3>
-                <p className="mt-2 text-sm text-muted">Know what you can safely spend without second-guessing.</p>
+                <h3 className="font-brand text-lg font-bold text-black">No Daily Burn Limit</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted">
+                  Lacking a simple per-day safe amount makes it easy to burn through disposable income too early.
+                </p>
               </div>
             </StaggerItem>
+
             <StaggerItem>
-              <div className="rounded-xl border border-border bg-white p-6">
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-soft text-black">
+              <div className="group rounded-2xl border border-border bg-white p-7 transition-all hover:border-black/30 hover:shadow-sm">
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 text-black group-hover:bg-black group-hover:text-white transition-colors">
                   <Target className="h-5 w-5" />
                 </div>
-                <h3 className="font-brand text-base font-semibold text-black">Vague savings goals</h3>
-                <p className="mt-2 text-sm text-muted">Turn a wish into a target with a date and a plan to reach it.</p>
+                <h3 className="font-brand text-lg font-bold text-black">Forgotten Savings</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted">
+                  Hoping to save "whatever is left" almost always leaves you with zero saved at the end of the month.
+                </p>
               </div>
             </StaggerItem>
           </Stagger>
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="border-b border-border bg-soft">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
-          <Animate>
-            <h2 className="font-brand text-3xl font-bold tracking-tight text-black">
-              How it works
+      {/* How It Works with Visual Step Formula */}
+      <section className="border-b border-border bg-neutral-50/70 py-20 sm:py-24">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <Animate className="max-w-2xl">
+            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-600">The 3-Step Process</span>
+            <h2 className="mt-2 font-brand text-3xl font-extrabold tracking-tight text-black sm:text-4xl">
+              From chaos to total financial clarity.
             </h2>
           </Animate>
-          <Stagger className="mt-10 grid gap-6 lg:grid-cols-3">
+
+          <Stagger className="mt-12 grid gap-6 lg:grid-cols-3">
             <StaggerItem>
-              <div className="rounded-xl border border-border bg-white p-6">
-                <span className="font-brand text-4xl font-bold text-black/10">01</span>
-                <h3 className="mt-4 font-brand text-lg font-semibold text-black">Add your money</h3>
-                <p className="mt-2 text-sm text-muted">Enter your income sources and how often you get paid.</p>
+              <div className="flex h-full flex-col justify-between rounded-2xl border border-border bg-white p-8 shadow-xs">
+                <div>
+                  <span className="font-brand text-5xl font-black text-neutral-200">01</span>
+                  <h3 className="mt-4 font-brand text-xl font-bold text-black">Capture Your Inflow</h3>
+                  <p className="mt-2.5 text-sm leading-relaxed text-muted">
+                    Set up your salary or side incomes. PocketGuard normalizes weekly, bi-weekly, or monthly paydays into an effective monthly pool.
+                  </p>
+                </div>
+                <div className="mt-6 rounded-xl bg-neutral-50 p-3 font-mono text-xs text-neutral-600">
+                  Effective Income = Max(Logged, Expected)
+                </div>
               </div>
             </StaggerItem>
+
             <StaggerItem>
-              <div className="rounded-xl border border-border bg-white p-6">
-                <span className="font-brand text-4xl font-bold text-black/10">02</span>
-                <h3 className="mt-4 font-brand text-lg font-semibold text-black">Set your plan</h3>
-                <p className="mt-2 text-sm text-muted">Plan your spending by category and set aside savings and bills.</p>
+              <div className="flex h-full flex-col justify-between rounded-2xl border border-border bg-white p-8 shadow-xs">
+                <div>
+                  <span className="font-brand text-5xl font-black text-neutral-200">02</span>
+                  <h3 className="mt-4 font-brand text-xl font-bold text-black">Plan With 1-Click Rollover</h3>
+                  <p className="mt-2.5 text-sm leading-relaxed text-muted">
+                    No tedious budgeting. Copy last month's envelopes in 1 click or generate a smart budget based on your last 3 months of actual history.
+                  </p>
+                </div>
+                <div className="mt-6 rounded-xl bg-neutral-50 p-3 font-mono text-xs text-neutral-600">
+                  Envelopes + Amortized Goal Targets
+                </div>
               </div>
             </StaggerItem>
+
             <StaggerItem>
-              <div className="rounded-xl border border-border bg-white p-6">
-                <span className="font-brand text-4xl font-bold text-black/10">03</span>
-                <h3 className="mt-4 font-brand text-lg font-semibold text-black">Know what you can spend</h3>
-                <p className="mt-2 text-sm text-muted">Available to Spend shows what's left, updated from your real money.</p>
+              <div className="flex h-full flex-col justify-between rounded-2xl border border-border bg-white p-8 shadow-xs">
+                <div>
+                  <span className="font-brand text-5xl font-black text-neutral-200">03</span>
+                  <h3 className="mt-4 font-brand text-xl font-bold text-black">Spend by the Safe Daily Pace</h3>
+                  <p className="mt-2.5 text-sm leading-relaxed text-muted">
+                    PocketGuard reconciles your bills automatically and recalculates your daily burn rate each morning so you never guess again.
+                  </p>
+                </div>
+                <div className="mt-6 rounded-xl bg-neutral-50 p-3 font-mono text-xs text-neutral-600">
+                  Safe Pace = Available / Days Remaining
+                </div>
               </div>
             </StaggerItem>
           </Stagger>
-          <Animate delay={0.2}>
-            <div className="mt-8 rounded-xl border border-border bg-white p-6">
-              <p className="text-sm font-medium text-black">Example calculation</p>
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-                <span className="text-muted">Income</span>
-                <span className="font-medium tabular">₦500,000</span>
-                <span className="text-muted">− planned expenses</span>
-                <span className="font-medium tabular">₦214,600</span>
-                <span className="text-muted">− savings</span>
-                <span className="font-medium tabular">₦100,000</span>
-                <span className="text-muted">=</span>
-                <span className="font-semibold text-positive tabular">
-                  Available to Spend ₦185,400
-                </span>
+        </div>
+      </section>
+
+      {/* Feature Grid Spotlight */}
+      <section className="border-b border-border bg-white py-20 sm:py-24">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div>
+              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-600">Feature Spotlight</span>
+              <h2 className="mt-2 font-brand text-3xl font-extrabold tracking-tight text-black sm:text-4xl">
+                Built for real money decisions.
+              </h2>
+            </div>
+            <Link
+              href="/features"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-black hover:text-neutral-600 transition-colors"
+            >
+              See all capabilities <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="rounded-2xl border border-border bg-white p-8 transition-shadow hover:shadow-md">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-positive mb-5">
+                <Zap className="h-6 w-6" />
               </div>
-              <p className="mt-2 text-xs text-muted">
-                Demo figures shown for illustration only.
+              <h3 className="font-brand text-lg font-bold text-black">Auto-Match Bill Reconciliation</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">
+                Log a receipt for rent or electricity and PocketGuard automatically matches it to your upcoming bill, marks it paid, and spins up the next cycle.
               </p>
             </div>
-          </Animate>
-        </div>
-      </section>
 
-      {/* Feature showcase */}
-      <section className="border-b border-border">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
-          <Animate>
-            <h2 className="font-brand text-3xl font-bold tracking-tight text-black">
-              Everything in one place
-            </h2>
-          </Animate>
-          <Stagger className="mt-10 grid gap-4 lg:grid-cols-2">
-            <StaggerItem>
-              <div className="rounded-xl border border-border bg-white p-6 transition-shadow hover:shadow-md">
-                <h3 className="flex items-center gap-2 font-brand text-lg font-semibold text-black">
-                  <Receipt className="h-5 w-5 text-positive" />
-                  Know where your money goes
-                </h3>
-                <p className="mt-2 text-sm text-muted">
-                  Transactions and spending categories in one clear history.
-                </p>
+            <div className="rounded-2xl border border-border bg-white p-8 transition-shadow hover:shadow-md">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 text-black mb-5">
+                <Sparkles className="h-6 w-6" />
               </div>
-            </StaggerItem>
-            <StaggerItem>
-              <div className="rounded-xl border border-border bg-white p-6 transition-shadow hover:shadow-md">
-                <h3 className="flex items-center gap-2 font-brand text-lg font-semibold text-black">
-                  <CalendarClock className="h-5 w-5 text-positive" />
-                  Plan before you spend
-                </h3>
-                <p className="mt-2 text-sm text-muted">
-                  Monthly planning, recurring expenses and bills, set in advance.
-                </p>
-              </div>
-            </StaggerItem>
-            <StaggerItem>
-              <div className="rounded-xl border border-border bg-white p-6 transition-shadow hover:shadow-md">
-                <h3 className="flex items-center gap-2 font-brand text-lg font-semibold text-black">
-                  <PiggyBank className="h-5 w-5 text-positive" />
-                  Save for what matters
-                </h3>
-                <p className="mt-2 text-sm text-muted">
-                  Savings goals with target dates and progress you can track.
-                </p>
-              </div>
-            </StaggerItem>
-            <StaggerItem>
-              <div className="rounded-xl border border-border bg-white p-6 transition-shadow hover:shadow-md">
-                <h3 className="flex items-center gap-2 font-brand text-lg font-semibold text-black">
-                  <TrendingUp className="h-5 w-5 text-positive" />
-                  Always know what's available
-                </h3>
-                <p className="mt-2 text-sm text-muted">
-                  Available to Spend — one clear number, from your real data.
-                </p>
-              </div>
-            </StaggerItem>
-          </Stagger>
-        </div>
-      </section>
+              <h3 className="font-brand text-lg font-bold text-black">Smart 3-Month Auto-Budget</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">
+                Let the engine review your historical spending patterns to recommend realistic envelopes with built-in safety buffers.
+              </p>
+            </div>
 
-      {/* Why PocketGuard */}
-      <section className="border-b border-border bg-soft">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
-          <Animate>
-            <h2 className="font-brand text-3xl font-bold tracking-tight text-black">
-              Why people choose PocketGuard
-            </h2>
-            <p className="mt-3 max-w-xl text-muted">
-              Built for real life, not accounting textbooks.
-            </p>
-          </Animate>
-          <Stagger className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <StaggerItem>
-              <div className="flex gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-black text-white">
-                  <Zap className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="font-brand text-base font-semibold text-black">Quick to set up</h3>
-                  <p className="mt-1 text-sm text-muted">
-                    Create your account, enter your income, and build your first plan in under 5 minutes.
-                  </p>
-                </div>
+            <div className="rounded-2xl border border-border bg-white p-8 transition-shadow hover:shadow-md">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 text-black mb-5">
+                <BarChart3 className="h-6 w-6" />
               </div>
-            </StaggerItem>
-            <StaggerItem>
-              <div className="flex gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-black text-white">
-                  <BarChart3 className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="font-brand text-base font-semibold text-black">Clear insights</h3>
-                  <p className="mt-1 text-sm text-muted">
-                    See spending by category, track monthly trends, and understand where your money goes.
-                  </p>
-                </div>
-              </div>
-            </StaggerItem>
-            <StaggerItem>
-              <div className="flex gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-black text-white">
-                  <ShieldCheck className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="font-brand text-base font-semibold text-black">Private by default</h3>
-                  <p className="mt-1 text-sm text-muted">
-                    No bank connections. Your data is encrypted and only accessible by you.
-                  </p>
-                </div>
-              </div>
-            </StaggerItem>
-          </Stagger>
-        </div>
-      </section>
+              <h3 className="font-brand text-lg font-bold text-black">Overspend Deficit Shields</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">
+                If dining out exceeds its envelope, PocketGuard dynamically adjusts your remaining Safe-to-Spend balance so your totals never break.
+              </p>
+            </div>
 
-      {/* Real-life scenarios */}
-      <section className="border-b border-border">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
-          <Animate>
-            <h2 className="font-brand text-3xl font-bold tracking-tight text-black">
-              Ready for real life
-            </h2>
-          </Animate>
-          <Stagger className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StaggerItem>
-              <div className="rounded-xl border border-border bg-white p-6">
-                <span className="text-xs font-medium uppercase tracking-wider text-muted">Payday</span>
-                <h3 className="mt-2 font-brand text-base font-semibold text-black">Income lands</h3>
-                <p className="mt-2 text-sm text-muted">Add your income and your plan updates instantly.</p>
+            <div className="rounded-2xl border border-border bg-white p-8 transition-shadow hover:shadow-md">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 text-black mb-5">
+                <Target className="h-6 w-6" />
               </div>
-            </StaggerItem>
-            <StaggerItem>
-              <div className="rounded-xl border border-border bg-white p-6">
-                <span className="text-xs font-medium uppercase tracking-wider text-muted">Rent week</span>
-                <h3 className="mt-2 font-brand text-base font-semibold text-black">Rent is due</h3>
-                <p className="mt-2 text-sm text-muted">Mark bills paid and see space open up in your plan.</p>
-              </div>
-            </StaggerItem>
-            <StaggerItem>
-              <div className="rounded-xl border border-border bg-white p-6">
-                <span className="text-xs font-medium uppercase tracking-wider text-muted">Unexpected</span>
-                <h3 className="mt-2 font-brand text-base font-semibold text-black">A surprise expense</h3>
-                <p className="mt-2 text-sm text-muted">Log it, categorize it, and see the real impact.</p>
-              </div>
-            </StaggerItem>
-            <StaggerItem>
-              <div className="rounded-xl border border-border bg-white p-6">
-                <span className="text-xs font-medium uppercase tracking-wider text-muted">Saving</span>
-                <h3 className="mt-2 font-brand text-base font-semibold text-black">Saving for a goal</h3>
-                <p className="mt-2 text-sm text-muted">Track progress toward what matters most to you.</p>
-              </div>
-            </StaggerItem>
-          </Stagger>
-        </div>
-      </section>
+              <h3 className="font-brand text-lg font-bold text-black">Amortized Savings Targets</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">
+                Set a goal due in December; the math automatically allocates only this month's required installment instead of starving your balance today.
+              </p>
+            </div>
 
-      {/* Security */}
-      <section className="border-b border-border bg-soft">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
-          <Animate>
-            <div className="mx-auto max-w-2xl text-center">
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white text-black">
+            <div className="rounded-2xl border border-border bg-white p-8 transition-shadow hover:shadow-md">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 text-black mb-5">
+                <Lock className="h-6 w-6" />
+              </div>
+              <h3 className="font-brand text-lg font-bold text-black">100% Zero Bank Link Risks</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">
+                Zero third-party screen scraping. No credentials stored. Fast manual input gives you awareness without privacy compromises.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-white p-8 transition-shadow hover:shadow-md">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 text-black mb-5">
                 <ShieldCheck className="h-6 w-6" />
               </div>
-              <h2 className="font-brand text-3xl font-bold tracking-tight text-black">
-                Your data stays yours
-              </h2>
-              <p className="mt-3 text-muted">
-                Only you can access your financial records. Your financial
-                information is protected with secure sessions and ownership checks
-                on every request.
+              <h3 className="font-brand text-lg font-bold text-black">Multi-Device Web App</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">
+                Engineered for quick on-the-go receipt entry at the checkout counter on your phone, with deep monthly reviews on your desktop.
               </p>
-              <Link
-                href="/privacy"
-                className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-black hover:underline"
-              >
-                Read our privacy policy <ArrowRight className="h-4 w-4" />
-              </Link>
             </div>
-          </Animate>
+          </div>
         </div>
       </section>
 
-      {/* Pricing */}
-      <section className="border-b border-border">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
-          <Animate>
-            <h2 className="font-brand text-3xl font-bold tracking-tight text-black">
-              Pricing
-            </h2>
-          </Animate>
-          <Animate delay={0.1}>
-            <div className="mt-8 max-w-md rounded-2xl border border-border bg-white p-8 shadow-sm">
-              <h3 className="font-brand text-xl font-semibold text-black">Free</h3>
-              <p className="mt-2 text-sm text-muted">
-                Plan your money and stay confident about what you can spend.
-              </p>
-              <div className="mt-6">
-                <span className="font-brand text-4xl font-bold text-black">₦0</span>
-                <span className="text-muted"> / forever</span>
+      {/* Free Forever Banner */}
+      <section className="border-b border-border bg-neutral-50/60 py-20 sm:py-24">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          <div className="rounded-3xl border border-neutral-200 bg-white p-8 sm:p-12 shadow-xl shadow-neutral-200/40">
+            <div className="grid gap-8 md:grid-cols-12 md:items-center">
+              <div className="md:col-span-7">
+                <div className="inline-flex items-center gap-1.5 rounded-md bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">
+                  FREE & OPEN ACCESS
+                </div>
+                <h3 className="mt-4 font-brand text-3xl font-extrabold text-black">
+                  Zero subscriptions. No paywalls.
+                </h3>
+                <p className="mt-3 text-base leading-relaxed text-muted">
+                  Get full access to all budgeting features, auto-matching, goal tracking, and daily pace calculators.
+                </p>
+                <div className="mt-6 grid grid-cols-2 gap-3 text-sm font-medium text-neutral-800">
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-positive" /> Full Safe-to-Spend
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-positive" /> Auto-Rollover
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-positive" /> Bill Reconciliation
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-positive" /> Multi-Goal Tracking
+                  </div>
+                </div>
               </div>
-              <ul className="mt-6 space-y-2 text-sm">
-                {[
-                  "Income, expenses, bills and savings",
-                  "Monthly plan and Available to Spend",
-                  "Savings goals with progress",
-                  "Basic analytics",
-                ].map((item) => (
-                  <li key={item} className="flex items-center gap-2 text-black">
-                    <Check className="h-4 w-4 text-positive" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href="/register"
-                className="mt-8 inline-flex h-12 w-full items-center justify-center rounded-lg bg-black px-6 text-base font-medium text-white transition-colors hover:bg-neutral-800"
-              >
-                Get started free
-              </Link>
+
+              <div className="md:col-span-5 flex flex-col items-center justify-center rounded-2xl bg-neutral-900 p-8 text-center text-white">
+                <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Monthly Cost</p>
+                <p className="mt-2 font-brand text-5xl font-black text-white">₦0</p>
+                <p className="mt-1 text-xs text-neutral-400">Forever free. No credit card required.</p>
+                <Link
+                  href="/register"
+                  className="mt-6 w-full rounded-xl bg-white py-3.5 text-center text-sm font-bold text-black transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Create Free Account
+                </Link>
+              </div>
             </div>
-          </Animate>
+          </div>
         </div>
       </section>
 
-      {/* FAQ preview */}
-      <section className="border-b border-border bg-soft">
-        <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:py-20">
-          <Animate>
-            <h2 className="font-brand text-3xl font-bold tracking-tight text-black">
+      {/* FAQ Accordion */}
+      <section className="border-b border-border bg-white py-20 sm:py-24">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6">
+          <Animate className="text-center">
+            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-600">Got Questions?</span>
+            <h2 className="mt-2 font-brand text-3xl font-extrabold tracking-tight text-black sm:text-4xl">
               Frequently asked questions
             </h2>
+            <p className="mt-3 text-muted">Everything you need to know about PocketGuard's calculation model.</p>
           </Animate>
-          <Stagger className="mt-8 space-y-2" staggerDelay={0.05}>
+
+          <Stagger className="mt-10 space-y-3" staggerDelay={0.05}>
             {faqs.map((faq, i) => (
               <StaggerItem key={faq.q}>
                 <FaqItem
@@ -531,36 +557,28 @@ export default function HomePage() {
               </StaggerItem>
             ))}
           </Stagger>
-          <Animate delay={0.2}>
-            <div className="mt-8 text-center">
-              <Link
-                href="/faq"
-                className="inline-flex items-center gap-1 text-sm font-medium text-black hover:underline"
-              >
-                See all questions <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </Animate>
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="bg-black text-white">
-        <div className="mx-auto max-w-4xl px-4 py-20 text-center sm:px-6">
+      {/* Final Heroic CTA */}
+      <section className="relative overflow-hidden bg-black text-white py-24 sm:py-28">
+        <div className="pointer-events-none absolute -bottom-20 -right-20 h-96 w-96 rounded-full bg-emerald-600/20 blur-3xl" />
+        <div className="relative mx-auto max-w-4xl px-4 text-center sm:px-6">
           <Animate>
-            <h2 className="font-brand text-3xl font-bold tracking-tight sm:text-4xl">
-              Give every naira a plan.
+            <h2 className="font-brand text-4xl font-extrabold tracking-tight sm:text-5xl">
+              Give every single naira a job today.
             </h2>
-            <p className="mx-auto mt-4 max-w-lg text-lg text-white/70">
-              Create a free account, complete a quick onboarding, and see your
-              first plan in minutes.
+            <p className="mx-auto mt-4 max-w-xl text-lg text-neutral-300">
+              Join thousands who have stopped stressing about their bank balance. Set up your first safe plan in 3 minutes.
             </p>
-            <Link
-              href="/register"
-              className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-white px-8 text-base font-semibold text-black transition-colors hover:bg-neutral-200"
-            >
-              Get started <ArrowRight className="h-4 w-4" />
-            </Link>
+            <div className="mt-9 flex flex-wrap justify-center gap-4">
+              <Link
+                href="/register"
+                className="inline-flex h-13 items-center justify-center gap-2 rounded-xl bg-white px-8 text-base font-bold text-black transition-all hover:bg-neutral-200 hover:-translate-y-0.5"
+              >
+                Start planning for free <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
           </Animate>
         </div>
       </section>

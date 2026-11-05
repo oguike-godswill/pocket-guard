@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import type { TransactionType, RecurringFrequency } from "@prisma/client";
 
 export type PeriodKey = string; // "YYYY-MM"
 
@@ -47,9 +46,11 @@ export async function getDashboardData(
     prisma.incomeSource.findMany({ where: { userId } }),
     prisma.transaction.findMany({
       where: { userId, type: "expense", date: { gte: start, lt: end } },
+      orderBy: { date: "desc" },
     }),
     prisma.transaction.findMany({
       where: { userId, type: "income", date: { gte: start, lt: end } },
+      orderBy: { date: "desc" },
     }),
     prisma.monthlyPlan.findUnique({
       where: { userId_month_year: { userId, year, month } },
@@ -64,12 +65,12 @@ export async function getDashboardData(
     }),
   ]);
 
-  return { user, incomes, expenseTxns, incomeTxns, plan, bills, goals, recentTransactions };
+  return { user, incomes, expenseTxns, incomeTxns, plan, bills, goals, recentTransactions, year, month };
 }
 
 export type DashboardInput = Awaited<ReturnType<typeof getDashboardData>>;
 
-function toNumber(value: unknown): number {
+export function toNumber(value: unknown): number {
   if (value === null || value === undefined) return 0;
   if (typeof value === "object" && "toNumber" in (value as object)) {
     return Number((value as { toNumber: () => number }).toNumber());
@@ -78,53 +79,168 @@ function toNumber(value: unknown): number {
 }
 
 /**
- * Central calculation for Available to Spend:
- * current money + expected income − upcoming bills − planned expenses − savings commitments
+ * Total expected/received income for the month.
+ * If actual income transactions exist, they are counted. If expected income sources
+ * exceed logged transactions (or no income logged yet), the larger realistic expectation is used,
+ * preventing double-counting identical salary or income streams.
  */
-export function calculateAvailableToSpend(data: DashboardInput): number {
-  const currentMoney = calculateCurrentMoney(data);
-  const upcomingBills = calculateTotalUpcomingBills(data);
-  const plannedExpenses = calculateTotalPlannedExpenses(data);
-  const savingsCommitments = calculateTotalSavingsCommitments(data);
-  return currentMoney - upcomingBills - plannedExpenses - savingsCommitments;
+export function calculateEffectiveIncome(data: DashboardInput): number {
+  const loggedIncome = data.incomeTxns.reduce((s, t) => s + toNumber(t.amount), 0);
+  const expectedMonthlyIncome = data.incomes.reduce((s, src) => {
+    const amt = toNumber(src.amount);
+    if (src.frequency === "weekly") return s + amt * 4.33;
+    if (src.frequency === "yearly") return s + amt / 12;
+    return s + amt;
+  }, 0);
+
+  return Math.max(loggedIncome, expectedMonthlyIncome);
 }
 
-export function calculateCurrentMoney(data: DashboardInput): number {
-  let total = 0;
-  for (const t of data.incomeTxns) total += toNumber(t.amount);
-  for (const s of data.incomes) total += toNumber(s.amount);
-  return total;
+/**
+ * Total spent so far this month
+ */
+export function calculateActualExpenses(data: DashboardInput): number {
+  return data.expenseTxns.reduce((s, t) => s + toNumber(t.amount), 0);
 }
 
-export function calculateTotalIncome(data: DashboardInput): number {
-  let total = 0;
-  for (const t of data.incomeTxns) total += toNumber(t.amount);
-  for (const s of data.incomes) total += toNumber(s.amount);
-  return total;
+/**
+ * Total remaining unpaid bills
+ */
+export function calculateTotalUpcomingBills(data: DashboardInput): number {
+  return data.bills.reduce((s, b) => (b.paid ? s : s + toNumber(b.amount)), 0);
 }
 
-export function calculateTotalPlannedExpenses(data: DashboardInput): number {
-  let total = 0;
-  for (const item of data.plan?.budgetItems ?? []) {
-    total += toNumber(item.plannedAmount);
-  }
-  return total;
-}
+/**
+ * Monthly savings goal target commitment.
+ * Calculates what should be contributed *this month* across all active goals,
+ * either by targetDate horizon (months remaining) or an even amortized contribution.
+ */
+export function calculateMonthlySavingsCommitment(data: DashboardInput): number {
+  const now = new Date();
+  let totalMonthlyTarget = 0;
 
-export function calculateTotalSavingsCommitments(data: DashboardInput): number {
-  let total = 0;
   for (const g of data.goals) {
     const target = toNumber(g.targetAmount);
     const current = toNumber(g.currentAmount);
-    if (target > current) total += target - current;
+    const remaining = Math.max(0, target - current);
+    if (remaining <= 0) continue;
+
+    if (g.targetDate) {
+      const targetDate = new Date(g.targetDate);
+      const monthsLeft =
+        (targetDate.getFullYear() - now.getFullYear()) * 12 +
+        (targetDate.getMonth() - now.getMonth());
+      const effectiveMonths = Math.max(1, monthsLeft);
+      totalMonthlyTarget += remaining / effectiveMonths;
+    } else {
+      // If no deadline, default to steady 10-month progress allocation or remaining
+      totalMonthlyTarget += Math.min(remaining, remaining / 10);
+    }
   }
-  return total;
+
+  return Math.round(totalMonthlyTarget * 100) / 100;
 }
 
-export function calculateTotalUpcomingBills(data: DashboardInput): number {
-  let total = 0;
-  for (const b of data.bills) {
-    if (!b.paid) total += toNumber(b.amount);
+/**
+ * Total planned envelope amount for this period
+ */
+export function calculateTotalPlannedExpenses(data: DashboardInput): number {
+  return (data.plan?.budgetItems ?? []).reduce(
+    (s, item) => s + toNumber(item.plannedAmount),
+    0
+  );
+}
+
+/**
+ * Category-by-category remaining budget accounting for overspending:
+ * Remaining envelope = Max(Planned - Spent, 0)
+ * Overspent amount = Max(Spent - Planned, 0)
+ */
+export function calculateBudgetStatus(data: DashboardInput) {
+  const spentByCategory = new Map<string, number>();
+  for (const t of data.expenseTxns) {
+    spentByCategory.set(
+      t.category,
+      (spentByCategory.get(t.category) ?? 0) + toNumber(t.amount)
+    );
   }
-  return total;
+
+  let totalPlanned = 0;
+  let totalRemainingPlanned = 0;
+  let totalOverspent = 0;
+
+  for (const item of data.plan?.budgetItems ?? []) {
+    const planned = toNumber(item.plannedAmount);
+    const spent = spentByCategory.get(item.category) ?? 0;
+    totalPlanned += planned;
+
+    if (spent > planned) {
+      totalOverspent += spent - planned;
+    } else {
+      totalRemainingPlanned += planned - spent;
+    }
+  }
+
+  return {
+    spentByCategory,
+    totalPlanned,
+    totalRemainingPlanned,
+    totalOverspent,
+  };
+}
+
+/**
+ * Central Elevated Available to Spend:
+ * Effective Monthly Inflow
+ *  - Actual Outflow (logged expenses)
+ *  - Unpaid upcoming bills
+ *  - Remaining unspent budgeted envelopes
+ *  - Monthly savings commitment
+ */
+export function calculateAvailableToSpend(data: DashboardInput): number {
+  const effectiveIncome = calculateEffectiveIncome(data);
+  const actualExpenses = calculateActualExpenses(data);
+  const upcomingBills = calculateTotalUpcomingBills(data);
+  const monthlySavings = calculateMonthlySavingsCommitment(data);
+  const budgetStatus = calculateBudgetStatus(data);
+
+  // If a plan exists, we reserve the remaining unspent budget
+  const reservedForPlan = data.plan
+    ? budgetStatus.totalRemainingPlanned
+    : 0;
+
+  return (
+    effectiveIncome -
+    actualExpenses -
+    upcomingBills -
+    reservedForPlan -
+    monthlySavings
+  );
+}
+
+/**
+ * Calculate Safe-to-Spend Daily Burn Rate
+ */
+export function calculateDailySafeToSpend(
+  available: number,
+  year: number,
+  month: number
+): { dailyAmount: number; daysRemaining: number; totalDays: number } {
+  const now = new Date();
+  const isCurrentMonth =
+    now.getFullYear() === year && now.getMonth() + 1 === month;
+
+  const totalDays = new Date(year, month, 0).getDate();
+  const currentDay = isCurrentMonth ? now.getDate() : 1;
+  const daysRemaining = isCurrentMonth
+    ? Math.max(1, totalDays - currentDay + 1)
+    : totalDays;
+
+  const dailyAmount = available > 0 ? available / daysRemaining : 0;
+
+  return {
+    dailyAmount: Math.round(dailyAmount * 100) / 100,
+    daysRemaining,
+    totalDays,
+  };
 }
